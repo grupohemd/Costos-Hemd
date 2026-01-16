@@ -965,12 +965,6 @@ function LoginScreen({ onLogin }) {
             {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
         </div>
-
-        <div className="mt-6 text-center">
-          <p className="text-xs text-gray-400">
-            Demo: admin@restaurante.com / admin123
-          </p>
-        </div>
       </div>
     </div>
   );
