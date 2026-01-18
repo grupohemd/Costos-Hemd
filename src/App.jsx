@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from 'firebase/firestore';
 
@@ -231,6 +231,32 @@ const initialIngredients = [
   { id: '122', medida: 'gr', ingrediente: 'Chile rojo', pesoCompra: 1300, precio: 84.95, grupo: 'Frutas y verduras', marca: '', proveedor: '', fechaActualizacion: '16/01/2026', pendienteValidacion: true },
   { id: '123', medida: 'gr', ingrediente: 'Pimiento asado', pesoCompra: 0, precio: 0, grupo: 'Frutas y verduras', marca: '', proveedor: '', fechaActualizacion: '16/01/2026', pendienteValidacion: true },
   { id: '124', medida: 'gr', ingrediente: 'Peperoncinis jugo', pesoCompra: 453.5, precio: 87.9, grupo: 'Salsas y derivados', marca: '', proveedor: '', fechaActualizacion: '16/01/2026', pendienteValidacion: true },
+  // Ingredientes agregados desde recetas NEW YORK y CTG - PENDIENTE VALIDACIÓN
+  { id: '125', medida: 'gr', ingrediente: 'Mostaza Brown Essential Eve', pesoCompra: 340, precio: 67.9, grupo: 'Salsas y derivados', marca: '', proveedor: '', fechaActualizacion: '16/01/2026', pendienteValidacion: true },
+  { id: '126', medida: 'gr', ingrediente: 'Agua de piña', pesoCompra: 0, precio: 0, grupo: 'Salsas y derivados', marca: '', proveedor: '', fechaActualizacion: '16/01/2026', pendienteValidacion: true },
+  // Ingredientes agregados desde recetas LATIN JAPO y CANCUN - PENDIENTE VALIDACIÓN
+  { id: '127', medida: 'gr', ingrediente: 'Siracha', pesoCompra: 3850, precio: 1200, grupo: 'Salsas y derivados', marca: '', proveedor: '', fechaActualizacion: '16/01/2026', pendienteValidacion: true },
+  { id: '128', medida: 'gr', ingrediente: 'Queso crema', pesoCompra: 650, precio: 169.95, grupo: 'Lacteos y derivados', marca: '', proveedor: '', fechaActualizacion: '16/01/2026', pendienteValidacion: true },
+  { id: '129', medida: 'gr', ingrediente: 'Bacon', pesoCompra: 1360, precio: 519, grupo: 'Proteinas', marca: '', proveedor: '', fechaActualizacion: '16/01/2026', pendienteValidacion: true },
+  { id: '130', medida: 'gr', ingrediente: 'Teriyaki', pesoCompra: 4760, precio: 700, grupo: 'Salsas y derivados', marca: '', proveedor: '', fechaActualizacion: '16/01/2026', pendienteValidacion: true },
+  { id: '131', medida: 'gr', ingrediente: 'Cebolla morada', pesoCompra: 453, precio: 20, grupo: 'Frutas y verduras', marca: '', proveedor: '', fechaActualizacion: '16/01/2026', pendienteValidacion: true },
+  { id: '132', medida: 'gr', ingrediente: 'Hojas de laurel', pesoCompra: 20, precio: 18.1, grupo: 'Polvos y sazonadores', marca: '', proveedor: '', fechaActualizacion: '16/01/2026', pendienteValidacion: true },
+  { id: '133', medida: 'gr', ingrediente: 'Remolacha', pesoCompra: 453, precio: 12.72, grupo: 'Frutas y verduras', marca: '', proveedor: '', fechaActualizacion: '16/01/2026', pendienteValidacion: true },
+  { id: '134', medida: 'gr', ingrediente: 'Sesamo negro', pesoCompra: 227, precio: 100, grupo: 'Polvos y sazonadores', marca: '', proveedor: '', fechaActualizacion: '16/01/2026', pendienteValidacion: true },
+  { id: '135', medida: 'gr', ingrediente: 'Cebollina', pesoCompra: 60, precio: 30, grupo: 'Frutas y verduras', marca: '', proveedor: '', fechaActualizacion: '16/01/2026', pendienteValidacion: true },
+  { id: '136', medida: 'gr', ingrediente: 'Vinagre blanco', pesoCompra: 3700, precio: 134.95, grupo: 'Salsas y derivados', marca: '', proveedor: '', fechaActualizacion: '16/01/2026', pendienteValidacion: true },
+  { id: '137', medida: 'gr', ingrediente: 'Jalapeño con pepa', pesoCompra: 226, precio: 12.99, grupo: 'Frutas y verduras', marca: '', proveedor: '', fechaActualizacion: '16/01/2026', pendienteValidacion: true },
+  { id: '138', medida: 'gr', ingrediente: 'Jalapeno rodajas', pesoCompra: 226, precio: 12.99, grupo: 'Frutas y verduras', marca: '', proveedor: '', fechaActualizacion: '16/01/2026', pendienteValidacion: true },
+  // Ingredientes agregados desde recetas MAIZ LOCO y POSTRE-LND - PENDIENTE VALIDACIÓN
+  { id: '139', medida: 'gr', ingrediente: 'Elotitos', pesoCompra: null, precio: null, grupo: 'Snacks', marca: '', proveedor: '', fechaActualizacion: '18/01/2026', pendienteValidacion: true },
+  { id: '140', medida: 'gr', ingrediente: 'Polvo esquite', pesoCompra: null, precio: null, grupo: 'Polvos y sazonadores', marca: '', proveedor: '', fechaActualizacion: '18/01/2026', pendienteValidacion: true },
+  { id: '141', medida: 'gr', ingrediente: 'Maiz loco preparado', pesoCompra: null, precio: null, grupo: 'Salsas y derivados', marca: '', proveedor: '', fechaActualizacion: '18/01/2026', pendienteValidacion: true },
+  { id: '142', medida: 'gr', ingrediente: 'Salsa blanca tegu', pesoCompra: null, precio: null, grupo: 'Salsas y derivados', marca: '', proveedor: '', fechaActualizacion: '18/01/2026', pendienteValidacion: true },
+  // Ingredientes agregados desde ENSALADA CANCUN y ENSALADA CHINATOWN
+  { id: '143', medida: 'gr', ingrediente: 'Fideos fritos', pesoCompra: 350, precio: 67.85, grupo: 'Harinas y derivados', marca: '', proveedor: '', fechaActualizacion: '18/01/2026', pendienteValidacion: true },
+  { id: '144', medida: 'gr', ingrediente: 'Mantequilla de mani', pesoCompra: 1130, precio: 154.95, grupo: 'Salsas y derivados', marca: '', proveedor: '', fechaActualizacion: '18/01/2026', pendienteValidacion: true },
+  // Ingredientes agregados desde CROQUETA SETAS, NEW YORK SANDWICH, SANSEBASTIAN SANDWICH
+  { id: '145', medida: 'gr', ingrediente: 'Polvo hongos', pesoCompra: 65, precio: 17.25, grupo: 'Polvos y sazonadores', marca: '', proveedor: '', fechaActualizacion: '18/01/2026', pendienteValidacion: true },
 ];
 
 // Recetas iniciales - TGU
@@ -347,6 +373,596 @@ const initialRecipes = [
       },
     ],
     fechaActualizacion: '16/01/2026'
+  },
+  {
+    id: '3',
+    nombre: 'NEW YORK',
+    marca: 'Soul Chkn',
+    subRecetas: [
+      {
+        id: 'sr_ny1',
+        nombre: 'MIEL DE KETCHUP Y JACK DANIELS',
+        ingredientes: [
+          { id: 'ny_i1', ingredienteNombre: 'Jack Daniels', peso: 125 },
+          { id: 'ny_i2', ingredienteNombre: 'Miel', peso: 93 },
+          { id: 'ny_i3', ingredienteNombre: 'Ketchup', peso: 150 },
+        ],
+        pesoReceta: 200,
+        pesoPorcion: 25,
+      },
+      {
+        id: 'sr_ny2',
+        nombre: 'MAYONESA DE MOSTAZA',
+        ingredientes: [
+          { id: 'ny_i4', ingredienteNombre: 'Mayonesa', peso: 200 },
+          { id: 'ny_i5', ingredienteNombre: 'Mostaza Brown Essential Eve', peso: 25 },
+          { id: 'ny_i6', ingredienteNombre: 'Agua', peso: 30 },
+        ],
+        pesoReceta: 240,
+        pesoPorcion: 70,
+      },
+      {
+        id: 'sr_ny3',
+        nombre: 'TOPPINGS',
+        ingredientes: [
+          { id: 'ny_i7', ingredienteNombre: 'Pepinillos', peso: 35 },
+        ],
+        pesoReceta: 35,
+        pesoPorcion: 35,
+      },
+    ],
+    fechaActualizacion: '16/01/2026'
+  },
+  {
+    id: '4',
+    nombre: 'CTG',
+    marca: 'Soul Chkn',
+    subRecetas: [
+      {
+        id: 'sr_ctg1',
+        nombre: 'SALSA TARTARA BARRANQUILLA',
+        ingredientes: [
+          { id: 'ctg_i1', ingredienteNombre: 'Mayonesa', peso: 350 },
+          { id: 'ctg_i2', ingredienteNombre: 'Zanahoria', peso: 40 },
+          { id: 'ctg_i3', ingredienteNombre: 'Cebolla', peso: 35 },
+          { id: 'ctg_i4', ingredienteNombre: 'Ajo', peso: 4 },
+          { id: 'ctg_i5', ingredienteNombre: 'Cilantro', peso: 15 },
+          { id: 'ctg_i6', ingredienteNombre: 'Azucar', peso: 5.6 },
+          { id: 'ctg_i7', ingredienteNombre: 'Agua', peso: 50 },
+          { id: 'ctg_i8', ingredienteNombre: 'Vinagre', peso: 1.25 },
+          { id: 'ctg_i9', ingredienteNombre: 'Pimienta', peso: 1.6 },
+          { id: 'ctg_i10', ingredienteNombre: 'Sal', peso: 3.53 },
+        ],
+        pesoReceta: 484,
+        pesoPorcion: 125,
+      },
+      {
+        id: 'sr_ctg2',
+        nombre: 'MERMELADA PIÑA',
+        ingredientes: [
+          { id: 'ctg_i11', ingredienteNombre: 'Piña', peso: 1059 },
+          { id: 'ctg_i12', ingredienteNombre: 'Agua', peso: 200 },
+          { id: 'ctg_i13', ingredienteNombre: 'Azucar', peso: 250 },
+          { id: 'ctg_i14', ingredienteNombre: 'Agua de piña', peso: 1090 },
+        ],
+        pesoReceta: 860,
+        pesoPorcion: 25,
+      },
+      {
+        id: 'sr_ctg3',
+        nombre: 'TOPPINGS',
+        ingredientes: [
+          { id: 'ctg_i15', ingredienteNombre: 'Lechuga cabeza', peso: 15 },
+          { id: 'ctg_i16', ingredienteNombre: 'Papa', peso: 40 },
+          { id: 'ctg_i17', ingredienteNombre: 'Maiz', peso: 15 },
+        ],
+        pesoReceta: 70,
+        pesoPorcion: 70,
+      },
+    ],
+    fechaActualizacion: '16/01/2026'
+  },
+  {
+    id: '5',
+    nombre: 'LATIN JAPO',
+    marca: 'Soul Chkn',
+    subRecetas: [
+      {
+        id: 'sr_lj1',
+        nombre: 'MAYONESA DE SIRACHA',
+        ingredientes: [
+          { id: 'lj_i1', ingredienteNombre: 'Mayonesa', peso: 200 },
+          { id: 'lj_i2', ingredienteNombre: 'Siracha', peso: 20 },
+          { id: 'lj_i3', ingredienteNombre: 'Pepino', peso: 30 },
+          { id: 'lj_i4', ingredienteNombre: 'Queso crema', peso: 30 },
+        ],
+        pesoReceta: 280,
+        pesoPorcion: 50,
+      },
+      {
+        id: 'sr_lj2',
+        nombre: 'BACON JALAPEÑO TERIYAKI',
+        ingredientes: [
+          { id: 'lj_i5', ingredienteNombre: 'Bacon', peso: 150 },
+          { id: 'lj_i6', ingredienteNombre: 'Jalapeño', peso: 60 },
+          { id: 'lj_i7', ingredienteNombre: 'Teriyaki', peso: 120 },
+          { id: 'lj_i8', ingredienteNombre: 'Agua potable', peso: 30 },
+          { id: 'lj_i9', ingredienteNombre: 'Cebolla', peso: 130 },
+          { id: 'lj_i10', ingredienteNombre: 'Ajo', peso: 10 },
+          { id: 'lj_i11', ingredienteNombre: 'Jengibre', peso: 17 },
+          { id: 'lj_i12', ingredienteNombre: 'Vinagre blanco', peso: 40 },
+        ],
+        pesoReceta: 350,
+        pesoPorcion: 50,
+      },
+      {
+        id: 'sr_lj3',
+        nombre: 'CEBOLLA ENCURTIDA',
+        ingredientes: [
+          { id: 'lj_i13', ingredienteNombre: 'Cebolla morada', peso: 430 },
+          { id: 'lj_i14', ingredienteNombre: 'Agua potable', peso: 300 },
+          { id: 'lj_i15', ingredienteNombre: 'Vinagre', peso: 300 },
+          { id: 'lj_i16', ingredienteNombre: 'Azucar', peso: 16.5 },
+          { id: 'lj_i17', ingredienteNombre: 'Oregano', peso: 0.33 },
+          { id: 'lj_i18', ingredienteNombre: 'Pimienta', peso: 1.6 },
+          { id: 'lj_i19', ingredienteNombre: 'Hojas de laurel', peso: 0.2 },
+          { id: 'lj_i20', ingredienteNombre: 'Remolacha', peso: 100 },
+        ],
+        pesoReceta: 884,
+        pesoPorcion: 20,
+      },
+      {
+        id: 'sr_lj4',
+        nombre: 'TOPPINGS',
+        ingredientes: [
+          { id: 'lj_i21', ingredienteNombre: 'Sesamo negro', peso: 2 },
+          { id: 'lj_i22', ingredienteNombre: 'Cebollina', peso: 2 },
+        ],
+        pesoReceta: 4,
+        pesoPorcion: 4,
+      },
+    ],
+    fechaActualizacion: '16/01/2026'
+  },
+  {
+    id: '6',
+    nombre: 'CANCUN',
+    marca: 'Soul Chkn',
+    subRecetas: [
+      {
+        id: 'sr_can1',
+        nombre: 'MAYONESA DE AGUACHILE',
+        ingredientes: [
+          { id: 'can_i1', ingredienteNombre: 'Mayonesa', peso: 300 },
+          { id: 'can_i2', ingredienteNombre: 'Pepino', peso: 118 },
+          { id: 'can_i3', ingredienteNombre: 'Cilantro', peso: 32 },
+          { id: 'can_i4', ingredienteNombre: 'Jalapeño con pepa', peso: 140 },
+          { id: 'can_i5', ingredienteNombre: 'Limon', peso: 40 },
+          { id: 'can_i6', ingredienteNombre: 'Comino', peso: 1.25 },
+          { id: 'can_i7', ingredienteNombre: 'Pimienta', peso: 1.6 },
+          { id: 'can_i8', ingredienteNombre: 'Soja', peso: 5 },
+        ],
+        pesoReceta: 726,
+        pesoPorcion: 125,
+      },
+      {
+        id: 'sr_can2',
+        nombre: 'TOPPINGS',
+        ingredientes: [
+          { id: 'can_i9', ingredienteNombre: 'Cilantro', peso: 0.5 },
+          { id: 'can_i10', ingredienteNombre: 'Cebolla roja', peso: 5 },
+          { id: 'can_i11', ingredienteNombre: 'Pepino', peso: 5 },
+          { id: 'can_i12', ingredienteNombre: 'Limon', peso: 6 },
+          { id: 'can_i13', ingredienteNombre: 'Jalapeno rodajas', peso: 3 },
+          { id: 'can_i14', ingredienteNombre: 'Rabano', peso: 5 },
+        ],
+        pesoReceta: 24.5,
+        pesoPorcion: 24.5,
+      },
+    ],
+    fechaActualizacion: '16/01/2026'
+  },
+  {
+    id: 'r7',
+    nombre: 'MAIZ LOCO',
+    marca: 'Soul Chkn',
+    subRecetas: [
+      {
+        id: 'sr_ml1',
+        nombre: 'POLVO CRUJIENTE',
+        ingredientes: [
+          { id: 'ml_i1', ingredienteNombre: 'Chetos flaming hot', peso: 50 },
+          { id: 'ml_i2', ingredienteNombre: 'Elotitos', peso: 50 },
+        ],
+        pesoReceta: 100,
+        pesoPorcion: 10,
+      },
+      {
+        id: 'sr_ml2',
+        nombre: 'SALSA VALENTINA',
+        ingredientes: [
+          { id: 'ml_i3', ingredienteNombre: 'Salsa blanca tegu', peso: 35 },
+          { id: 'ml_i4', ingredienteNombre: 'Maiz', peso: 250 },
+          { id: 'ml_i5', ingredienteNombre: 'Mantequilla rala', peso: 30 },
+          { id: 'ml_i6', ingredienteNombre: 'Salsa Valentina', peso: 4 },
+          { id: 'ml_i7', ingredienteNombre: 'Pimienta', peso: 0.76 },
+          { id: 'ml_i8', ingredienteNombre: 'Polvo esquite', peso: 6 },
+          { id: 'ml_i9', ingredienteNombre: 'Maiz loco preparado', peso: 180 },
+        ],
+        pesoReceta: 505.76,
+        pesoPorcion: 150,
+      },
+    ],
+    fechaActualizacion: '18/01/2026'
+  },
+  {
+    id: 'r8',
+    nombre: 'POSTRE - LND',
+    marca: 'Soul Chkn',
+    subRecetas: [
+      {
+        id: 'sr_plnd1',
+        nombre: 'GALLETA',
+        ingredientes: [
+          { id: 'plnd_i1', ingredienteNombre: 'Galleta maria', peso: 90 },
+          { id: 'plnd_i2', ingredienteNombre: 'Mantequilla amarilla', peso: 58 },
+          { id: 'plnd_i3', ingredienteNombre: 'Rapadura', peso: 7 },
+        ],
+        pesoReceta: 120,
+        pesoPorcion: 17,
+      },
+      {
+        id: 'sr_plnd2',
+        nombre: 'DULCE DE LECHE CREMOSO',
+        ingredientes: [
+          { id: 'plnd_i4', ingredienteNombre: 'Dulce de leche', peso: 380 },
+          { id: 'plnd_i5', ingredienteNombre: 'Crema dulce', peso: 250 },
+        ],
+        pesoReceta: 630,
+        pesoPorcion: 50,
+      },
+      {
+        id: 'sr_plnd3',
+        nombre: 'TOPPINGS',
+        ingredientes: [
+          { id: 'plnd_i6', ingredienteNombre: 'Banano', peso: 1 },
+          { id: 'plnd_i7', ingredienteNombre: 'Crema batida', peso: 18 },
+        ],
+        pesoReceta: 19,
+        pesoPorcion: 19,
+      },
+    ],
+    fechaActualizacion: '18/01/2026'
+  },
+  {
+    id: 'r9',
+    nombre: 'LIMA',
+    marca: 'Soul Chkn',
+    subRecetas: [
+      {
+        id: 'sr_lima1',
+        nombre: 'ADEREZO LIMA',
+        ingredientes: [
+          { id: 'lima_i1', ingredienteNombre: 'Mayonesa', peso: 5000 },
+          { id: 'lima_i2', ingredienteNombre: 'Ajo', peso: 62 },
+          { id: 'lima_i3', ingredienteNombre: 'Togarashi', peso: 62 },
+          { id: 'lima_i4', ingredienteNombre: 'Soja', peso: 100 },
+          { id: 'lima_i5', ingredienteNombre: 'Limon', peso: 300 },
+          { id: 'lima_i6', ingredienteNombre: 'Sal', peso: 75 },
+          { id: 'lima_i7', ingredienteNombre: 'Pimienta', peso: 15 },
+          { id: 'lima_i8', ingredienteNombre: 'Jengibre', peso: 42 },
+          { id: 'lima_i9', ingredienteNombre: 'Agua potable', peso: 1200 },
+          { id: 'lima_i10', ingredienteNombre: 'Cilantro', peso: 37 },
+        ],
+        pesoReceta: 6893,
+        pesoPorcion: 70,
+      },
+      {
+        id: 'sr_lima2',
+        nombre: 'TOPPINGS',
+        ingredientes: [
+          { id: 'lima_i11', ingredienteNombre: 'Camote', peso: 20 },
+          { id: 'lima_i12', ingredienteNombre: 'Cebolla amarilla', peso: 12 },
+          { id: 'lima_i13', ingredienteNombre: 'Aguacate', peso: 0.2 },
+          { id: 'lima_i14', ingredienteNombre: 'Cancha', peso: 20 },
+          { id: 'lima_i15', ingredienteNombre: 'Cilantro', peso: 1 },
+          { id: 'lima_i16', ingredienteNombre: 'Togarashi', peso: 1 },
+        ],
+        pesoReceta: 54.2,
+        pesoPorcion: 54.2,
+      },
+    ],
+    fechaActualizacion: '18/01/2026'
+  },
+  {
+    id: 'r10',
+    nombre: 'ENSALADA LIMA',
+    marca: 'Soul Chkn',
+    subRecetas: [
+      {
+        id: 'sr_elima1',
+        nombre: 'ADEREZO LIMA',
+        ingredientes: [
+          { id: 'elima_i1', ingredienteNombre: 'Mayonesa', peso: 5000 },
+          { id: 'elima_i2', ingredienteNombre: 'Ajo', peso: 62 },
+          { id: 'elima_i3', ingredienteNombre: 'Togarashi', peso: 62 },
+          { id: 'elima_i4', ingredienteNombre: 'Soja', peso: 100 },
+          { id: 'elima_i5', ingredienteNombre: 'Limon', peso: 300 },
+          { id: 'elima_i6', ingredienteNombre: 'Sal', peso: 75 },
+          { id: 'elima_i7', ingredienteNombre: 'Pimienta', peso: 15 },
+          { id: 'elima_i8', ingredienteNombre: 'Jengibre', peso: 42 },
+          { id: 'elima_i9', ingredienteNombre: 'Agua potable', peso: 1200 },
+          { id: 'elima_i10', ingredienteNombre: 'Cilantro', peso: 37 },
+        ],
+        pesoReceta: 6893,
+        pesoPorcion: 40,
+      },
+      {
+        id: 'sr_elima2',
+        nombre: 'ADEREZO NIKEI',
+        ingredientes: [
+          { id: 'elima_i11', ingredienteNombre: 'Aceite de oliva normal', peso: 80 },
+          { id: 'elima_i12', ingredienteNombre: 'Limon', peso: 55 },
+          { id: 'elima_i13', ingredienteNombre: 'Soja', peso: 15 },
+          { id: 'elima_i14', ingredienteNombre: 'Aceite de sesamo', peso: 4 },
+          { id: 'elima_i15', ingredienteNombre: 'Concentrado de mango', peso: 60 },
+        ],
+        pesoReceta: 214,
+        pesoPorcion: 30,
+      },
+      {
+        id: 'sr_elima3',
+        nombre: 'TOPPINGS',
+        ingredientes: [
+          { id: 'elima_i16', ingredienteNombre: 'Lechuga romana', peso: 100 },
+          { id: 'elima_i17', ingredienteNombre: 'Camote', peso: 30 },
+          { id: 'elima_i18', ingredienteNombre: 'Cebolla roja', peso: 12 },
+          { id: 'elima_i19', ingredienteNombre: 'Cancha', peso: 20 },
+          { id: 'elima_i20', ingredienteNombre: 'Togarashi', peso: 1 },
+          { id: 'elima_i21', ingredienteNombre: 'Aguacate', peso: 1.5 },
+        ],
+        pesoReceta: 164.5,
+        pesoPorcion: 164.5,
+      },
+    ],
+    fechaActualizacion: '18/01/2026'
+  },
+  {
+    id: 'r11',
+    nombre: 'ENSALADA CANCUN',
+    marca: 'Soul Chkn',
+    subRecetas: [
+      {
+        id: 'sr_ecancun1',
+        nombre: 'VINAGRETA CANCUN',
+        ingredientes: [
+          { id: 'ecancun_i1', ingredienteNombre: 'Aceite de oliva normal', peso: 80 },
+          { id: 'ecancun_i2', ingredienteNombre: 'Limon', peso: 60 },
+          { id: 'ecancun_i3', ingredienteNombre: 'Salsa maggi negra', peso: 15 },
+        ],
+        pesoReceta: 155,
+        pesoPorcion: 30,
+      },
+      {
+        id: 'sr_ecancun2',
+        nombre: 'MAYONESA DE AGUACHILE',
+        ingredientes: [
+          { id: 'ecancun_i4', ingredienteNombre: 'Mayonesa', peso: 300 },
+          { id: 'ecancun_i5', ingredienteNombre: 'Pepino', peso: 118 },
+          { id: 'ecancun_i6', ingredienteNombre: 'Cilantro', peso: 32 },
+          { id: 'ecancun_i7', ingredienteNombre: 'Jalapeño con pepa', peso: 140 },
+          { id: 'ecancun_i8', ingredienteNombre: 'Limon', peso: 40 },
+          { id: 'ecancun_i9', ingredienteNombre: 'Comino', peso: 1.25 },
+          { id: 'ecancun_i10', ingredienteNombre: 'Pimienta', peso: 1.6 },
+          { id: 'ecancun_i11', ingredienteNombre: 'Soja', peso: 5 },
+        ],
+        pesoReceta: 726,
+        pesoPorcion: 50,
+      },
+      {
+        id: 'sr_ecancun3',
+        nombre: 'TOPPINGS',
+        ingredientes: [
+          { id: 'ecancun_i12', ingredienteNombre: 'Lechuga romana', peso: 100 },
+          { id: 'ecancun_i13', ingredienteNombre: 'Pepino', peso: 12 },
+          { id: 'ecancun_i14', ingredienteNombre: 'Rabano', peso: 12 },
+          { id: 'ecancun_i15', ingredienteNombre: 'Jalapeno rodajas', peso: 5 },
+          { id: 'ecancun_i16', ingredienteNombre: 'Cebolla amarilla', peso: 12 },
+          { id: 'ecancun_i17', ingredienteNombre: 'Aguacate', peso: 1.5 },
+          { id: 'ecancun_i18', ingredienteNombre: 'Chips de platano', peso: 1 },
+          { id: 'ecancun_i19', ingredienteNombre: 'Piña', peso: 25 },
+        ],
+        pesoReceta: 168.5,
+        pesoPorcion: 168.5,
+      },
+    ],
+    fechaActualizacion: '18/01/2026'
+  },
+  {
+    id: 'r12',
+    nombre: 'ENSALADA CHINATOWN',
+    marca: 'Soul Chkn',
+    subRecetas: [
+      {
+        id: 'sr_echinatown1',
+        nombre: 'ADEREZO CUMPAO',
+        ingredientes: [
+          { id: 'echinatown_i1', ingredienteNombre: 'Mantequilla de mani', peso: 90 },
+          { id: 'echinatown_i2', ingredienteNombre: 'Aceite de sesamo', peso: 25 },
+          { id: 'echinatown_i3', ingredienteNombre: 'Miel', peso: 50 },
+          { id: 'echinatown_i4', ingredienteNombre: 'Vinagre de sushi', peso: 60 },
+          { id: 'echinatown_i5', ingredienteNombre: 'Soja', peso: 25 },
+          { id: 'echinatown_i6', ingredienteNombre: 'Agua potable', peso: 75 },
+          { id: 'echinatown_i7', ingredienteNombre: 'Hoisin', peso: 11 },
+        ],
+        pesoReceta: 336,
+        pesoPorcion: 50,
+      },
+      {
+        id: 'sr_echinatown2',
+        nombre: 'CRUNCHY OIL',
+        ingredientes: [
+          { id: 'echinatown_i8', ingredienteNombre: 'Aceite de oliva normal', peso: 850 },
+          { id: 'echinatown_i9', ingredienteNombre: 'Cebolla roja', peso: 285 },
+          { id: 'echinatown_i10', ingredienteNombre: 'Ajo', peso: 125 },
+          { id: 'echinatown_i11', ingredienteNombre: 'Togarashi', peso: 40 },
+          { id: 'echinatown_i12', ingredienteNombre: 'Azucar', peso: 20 },
+          { id: 'echinatown_i13', ingredienteNombre: 'Sal', peso: 10 },
+          { id: 'echinatown_i14', ingredienteNombre: 'Soja', peso: 50 },
+          { id: 'echinatown_i15', ingredienteNombre: 'Jengibre', peso: 9 },
+          { id: 'echinatown_i16', ingredienteNombre: 'Semillas de sesamo', peso: 25 },
+          { id: 'echinatown_i17', ingredienteNombre: 'Paprika', peso: 25 },
+          { id: 'echinatown_i18', ingredienteNombre: 'Glutamato', peso: 15 },
+        ],
+        pesoReceta: 1222,
+        pesoPorcion: 50,
+      },
+      {
+        id: 'sr_echinatown3',
+        nombre: 'TOPPINGS',
+        ingredientes: [
+          { id: 'echinatown_i19', ingredienteNombre: 'Lechuga romana', peso: 70 },
+          { id: 'echinatown_i20', ingredienteNombre: 'Fideos fritos', peso: 30 },
+          { id: 'echinatown_i21', ingredienteNombre: 'Cebollina', peso: 5 },
+          { id: 'echinatown_i22', ingredienteNombre: 'Edamame', peso: 30 },
+          { id: 'echinatown_i23', ingredienteNombre: 'Zanahoria', peso: 18 },
+          { id: 'echinatown_i24', ingredienteNombre: 'Repollo morado', peso: 10 },
+          { id: 'echinatown_i25', ingredienteNombre: 'Aguacate', peso: 0.5 },
+        ],
+        pesoReceta: 163.5,
+        pesoPorcion: 163.5,
+      },
+    ],
+    fechaActualizacion: '18/01/2026'
+  },
+  {
+    id: 'r13',
+    nombre: 'CROQUETA SETAS',
+    marca: 'Soul Chkn',
+    subRecetas: [
+      {
+        id: 'sr_crsetas1',
+        nombre: 'MASA CROQUETA SETAS',
+        ingredientes: [
+          { id: 'crsetas_i1', ingredienteNombre: 'Champiñones', peso: 1327 },
+          { id: 'crsetas_i2', ingredienteNombre: 'Ajo', peso: 60 },
+          { id: 'crsetas_i3', ingredienteNombre: 'Cebolla amarilla', peso: 500 },
+          { id: 'crsetas_i4', ingredienteNombre: 'Shitake', peso: 28.35 },
+          { id: 'crsetas_i5', ingredienteNombre: 'Sal', peso: 20 },
+          { id: 'crsetas_i6', ingredienteNombre: 'Pimienta', peso: 8 },
+          { id: 'crsetas_i7', ingredienteNombre: 'Tomillo', peso: 1 },
+          { id: 'crsetas_i8', ingredienteNombre: 'Glutamato', peso: 3 },
+          { id: 'crsetas_i9', ingredienteNombre: 'Polvo hongos', peso: 65 },
+          { id: 'crsetas_i10', ingredienteNombre: 'Aceite de oliva normal', peso: 115 },
+          { id: 'crsetas_i11', ingredienteNombre: 'Mantequilla amarilla', peso: 400 },
+          { id: 'crsetas_i12', ingredienteNombre: 'Harina', peso: 400 },
+          { id: 'crsetas_i13', ingredienteNombre: 'Leche entera', peso: 1000 },
+        ],
+        pesoReceta: 2675,
+        pesoPorcion: 45,
+      },
+      {
+        id: 'sr_crsetas2',
+        nombre: 'EMPANADO',
+        ingredientes: [
+          { id: 'crsetas_i14', ingredienteNombre: 'Huevo', peso: 2 },
+          { id: 'crsetas_i15', ingredienteNombre: 'Harina', peso: 2 },
+          { id: 'crsetas_i16', ingredienteNombre: 'Panko', peso: 2 },
+          { id: 'crsetas_i17', ingredienteNombre: 'Pan rallado', peso: 2 },
+        ],
+        pesoReceta: 8,
+        pesoPorcion: 8,
+      },
+    ],
+    fechaActualizacion: '18/01/2026'
+  },
+  {
+    id: 'r14',
+    nombre: 'NEW YORK SANDWICH',
+    marca: 'Soul Chkn',
+    subRecetas: [
+      {
+        id: 'sr_nysw1',
+        nombre: 'MIEL DE KETCHUP Y JACK DANIELS',
+        ingredientes: [
+          { id: 'nysw_i1', ingredienteNombre: 'Jack Daniels', peso: 125 },
+          { id: 'nysw_i2', ingredienteNombre: 'Miel', peso: 93 },
+          { id: 'nysw_i3', ingredienteNombre: 'Ketchup', peso: 150 },
+        ],
+        pesoReceta: 200,
+        pesoPorcion: 20,
+      },
+      {
+        id: 'sr_nysw2',
+        nombre: 'MAYONESA DE MOSTAZA',
+        ingredientes: [
+          { id: 'nysw_i4', ingredienteNombre: 'Mayonesa', peso: 200 },
+          { id: 'nysw_i5', ingredienteNombre: 'Mostaza Brown Essential Eve', peso: 25 },
+          { id: 'nysw_i6', ingredienteNombre: 'Agua potable', peso: 30 },
+        ],
+        pesoReceta: 240,
+        pesoPorcion: 40,
+      },
+      {
+        id: 'sr_nysw3',
+        nombre: 'TOPPINGS',
+        ingredientes: [
+          { id: 'nysw_i7', ingredienteNombre: 'Pepinillos', peso: 10 },
+          { id: 'nysw_i8', ingredienteNombre: 'Pan brioche', peso: 1 },
+        ],
+        pesoReceta: 11,
+        pesoPorcion: 11,
+      },
+    ],
+    fechaActualizacion: '18/01/2026'
+  },
+  {
+    id: 'r15',
+    nombre: 'SANSEBASTIAN SANDWICH',
+    marca: 'Soul Chkn',
+    subRecetas: [
+      {
+        id: 'sr_sssw1',
+        nombre: 'MIEL DE CHILE DULCE',
+        ingredientes: [
+          { id: 'sssw_i1', ingredienteNombre: 'Chile rojo', peso: 160 },
+          { id: 'sssw_i2', ingredienteNombre: 'Aceite de oliva normal', peso: 10 },
+          { id: 'sssw_i3', ingredienteNombre: 'Sal', peso: 3.53 },
+          { id: 'sssw_i4', ingredienteNombre: 'Pimienta', peso: 0.76 },
+          { id: 'sssw_i5', ingredienteNombre: 'Pimiento asado', peso: 63 },
+          { id: 'sssw_i6', ingredienteNombre: 'Miel', peso: 250 },
+          { id: 'sssw_i7', ingredienteNombre: 'Agua potable', peso: 30 },
+        ],
+        pesoReceta: 200,
+        pesoPorcion: 20,
+      },
+      {
+        id: 'sr_sssw2',
+        nombre: 'CESAR',
+        ingredientes: [
+          { id: 'sssw_i8', ingredienteNombre: 'Mayonesa', peso: 400 },
+          { id: 'sssw_i9', ingredienteNombre: 'Peperoncini', peso: 6 },
+          { id: 'sssw_i10', ingredienteNombre: 'Peperoncini', peso: 55 },
+          { id: 'sssw_i11', ingredienteNombre: 'Anchoas', peso: 18 },
+          { id: 'sssw_i12', ingredienteNombre: 'Sal', peso: 3.53 },
+          { id: 'sssw_i13', ingredienteNombre: 'Pimienta', peso: 1.6 },
+          { id: 'sssw_i14', ingredienteNombre: 'Aceitunas', peso: 15 },
+        ],
+        pesoReceta: 525,
+        pesoPorcion: 50,
+      },
+      {
+        id: 'sr_sssw3',
+        nombre: 'TOPPINGS',
+        ingredientes: [
+          { id: 'sssw_i15', ingredienteNombre: 'Pan brioche', peso: 1 },
+          { id: 'sssw_i16', ingredienteNombre: 'Perejil', peso: 3 },
+        ],
+        pesoReceta: 4,
+        pesoPorcion: 4,
+      },
+    ],
+    fechaActualizacion: '18/01/2026'
   }
 ];
 
@@ -882,6 +1498,7 @@ export default function App() {
           empaquesPorReceta={empaquesPorReceta}
           onToggleEmpaque={handleToggleEmpaque}
           calcularCostoEmpaques={calcularCostoEmpaques}
+          onUpdateEmpaques={setEmpaques}
         />
       )}
         </>
@@ -1182,7 +1799,8 @@ function DashboardScreen({
   empaques,
   empaquesPorReceta,
   onToggleEmpaque,
-  calcularCostoEmpaques
+  calcularCostoEmpaques,
+  onUpdateEmpaques
 }) {
   const [currentModule, setCurrentModule] = useState('menu');
 
@@ -1221,6 +1839,9 @@ function DashboardScreen({
           )}
           {currentModule === 'bases' && (
             <span className="text-sm font-medium text-gray-700">Bases de Receta</span>
+          )}
+          {currentModule === 'empaques' && (
+            <span className="text-sm font-medium text-gray-700">Empaques / Materiales</span>
           )}
         </div>
         <div className="flex items-center gap-4">
@@ -1290,6 +1911,12 @@ function DashboardScreen({
             calcularCostoPapasFritas={calcularCostoPapasFritas}
           />
         )}
+        {currentModule === 'empaques' && (
+          <EmpaquesModule
+            empaques={empaques}
+            onUpdateEmpaques={onUpdateEmpaques}
+          />
+        )}
       </main>
     </div>
   );
@@ -1303,6 +1930,7 @@ function DashboardMenu({ onSelectModule, brand, recipesCount }) {
     { id: 'recetas', name: 'Recetas y platos', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', description: `${recipesCount} receta${recipesCount !== 1 ? 's' : ''} en ${brand.name}`, badge: null, active: true },
     { id: 'ingredientes', name: 'Banco de Ingredientes', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', description: 'Compartido entre todas las marcas', badge: 'Global', active: true },
     { id: 'bases', name: 'Bases de Receta', icon: 'M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z', description: 'Pollo frito, papas y más', badge: 'Nuevo', active: true },
+    { id: 'empaques', name: 'Empaques / Materiales', icon: 'M20 7l-8-4-8 4m16 0v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4M12 21l8-4V7', description: 'Gestionar empaques y materiales', badge: null, active: true },
     { id: 'costos', name: 'Configuración de Costos', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', description: 'Costos fijos, ventas y prorrateo', badge: null, active: true },
     { id: 'reportes', name: 'Reportes', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', description: 'Próximamente', badge: null, active: false },
   ];
@@ -2261,50 +2889,306 @@ function BasesRecetaModule({ basesReceta, onUpdateBasesReceta, calcularCostoPoll
 }
 
 // ============================================
+// EMPAQUES / MATERIALES
+// ============================================
+function EmpaquesModule({ empaques, onUpdateEmpaques }) {
+  const [editingEmpaque, setEditingEmpaque] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [newEmpaque, setNewEmpaque] = useState({ nombre: '', precio: '' });
+
+  // Agregar nuevo empaque
+  const handleAddEmpaque = () => {
+    if (newEmpaque.nombre.trim() && newEmpaque.precio !== '') {
+      const nuevoEmpaque = {
+        id: 'emp_' + Date.now(),
+        nombre: newEmpaque.nombre.trim(),
+        precio: parseFloat(newEmpaque.precio) || 0
+      };
+      onUpdateEmpaques([...empaques, nuevoEmpaque]);
+      setNewEmpaque({ nombre: '', precio: '' });
+      setShowAddModal(false);
+    }
+  };
+
+  // Actualizar empaque existente
+  const handleUpdateEmpaque = () => {
+    if (editingEmpaque && editingEmpaque.nombre.trim()) {
+      const updated = empaques.map(emp => 
+        emp.id === editingEmpaque.id 
+          ? { ...emp, nombre: editingEmpaque.nombre.trim(), precio: parseFloat(editingEmpaque.precio) || 0 }
+          : emp
+      );
+      onUpdateEmpaques(updated);
+      setEditingEmpaque(null);
+    }
+  };
+
+  // Eliminar empaque
+  const handleDeleteEmpaque = (id) => {
+    onUpdateEmpaques(empaques.filter(emp => emp.id !== id));
+    setDeleteConfirm(null);
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900">Empaques / Materiales</h2>
+          <p className="text-sm text-gray-500 mt-1">Gestiona los empaques y materiales disponibles para las recetas</p>
+        </div>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 4v16m8-8H4" />
+          </svg>
+          Agregar empaque
+        </button>
+      </div>
+
+      {/* Lista de empaques */}
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100">
+          <h3 className="text-sm font-semibold text-gray-900">Lista de empaques</h3>
+        </div>
+        
+        <div className="divide-y divide-gray-100">
+          {empaques.map((empaque) => (
+            <div key={empaque.id} className="flex items-center justify-between px-5 py-4 hover:bg-gray-50">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900">{empaque.nombre}</p>
+                <p className="text-xs text-gray-500">ID: {empaque.id}</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="text-sm font-semibold text-gray-900 tabular-nums">L{empaque.precio.toFixed(2)}</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setEditingEmpaque({ ...empaque })}
+                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                    title="Editar"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setDeleteConfirm(empaque)}
+                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Eliminar"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {empaques.length === 0 && (
+          <div className="px-5 py-12 text-center">
+            <p className="text-gray-500">No hay empaques configurados</p>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="mt-3 text-sm text-purple-600 hover:text-purple-700 font-medium"
+            >
+              Agregar el primero
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Nota informativa */}
+      <div className="mt-6 p-4 bg-purple-50 border border-purple-200 rounded-xl">
+        <p className="text-sm text-purple-800">
+          <span className="font-semibold">Nota:</span> Los empaques se pueden activar/desactivar individualmente en cada receta. El costo de empaques activos se suma al costo total del plato.
+        </p>
+      </div>
+
+      {/* Modal para agregar empaque */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-5 z-50" onClick={() => setShowAddModal(false)}>
+          <div className="w-full max-w-md bg-white rounded-xl p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Agregar empaque</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                <input
+                  type="text"
+                  value={newEmpaque.nombre}
+                  onChange={(e) => setNewEmpaque({ ...newEmpaque, nombre: e.target.value })}
+                  placeholder="Ej: Caja para llevar"
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Precio (L)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={newEmpaque.precio}
+                  onChange={(e) => setNewEmpaque({ ...newEmpaque, precio: e.target.value })}
+                  placeholder="0.00"
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 justify-end mt-6">
+              <button
+                onClick={() => { setShowAddModal(false); setNewEmpaque({ nombre: '', precio: '' }); }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleAddEmpaque}
+                disabled={!newEmpaque.nombre.trim() || newEmpaque.precio === ''}
+                className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Agregar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para editar empaque */}
+      {editingEmpaque && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-5 z-50" onClick={() => setEditingEmpaque(null)}>
+          <div className="w-full max-w-md bg-white rounded-xl p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Editar empaque</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                <input
+                  type="text"
+                  value={editingEmpaque.nombre}
+                  onChange={(e) => setEditingEmpaque({ ...editingEmpaque, nombre: e.target.value })}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Precio (L)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={editingEmpaque.precio}
+                  onChange={(e) => setEditingEmpaque({ ...editingEmpaque, precio: parseFloat(e.target.value) || 0 })}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 justify-end mt-6">
+              <button
+                onClick={() => setEditingEmpaque(null)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleUpdateEmpaque}
+                disabled={!editingEmpaque.nombre.trim()}
+                className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmación para eliminar */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-5 z-50" onClick={() => setDeleteConfirm(null)}>
+          <div className="w-full max-w-sm bg-white rounded-xl p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Eliminar empaque</h3>
+            <p className="text-gray-600 mb-6">
+              ¿Estás seguro que quieres eliminar <strong>"{deleteConfirm.nombre}"</strong>?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                No
+              </button>
+              <button
+                onClick={() => handleDeleteEmpaque(deleteConfirm.id)}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
+              >
+                Sí, eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================
 // BANCO DE INGREDIENTES
 // ============================================
 function BancoIngredientes({ ingredients, onAdd, onDelete, onUpdate }) {
+  // ========== ESTADOS LOCALES ==========
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingIngredient, setEditingIngredient] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterGrupo, setFilterGrupo] = useState('');
   const [filterPendientes, setFilterPendientes] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
+  // ========== DATOS DERIVADOS ==========
   const grupos = [...new Set(ingredients.map(ing => ing.grupo))].filter(Boolean).sort();
-  
   const pendientesCount = ingredients.filter(ing => !ing.pesoCompra || !ing.precio).length;
 
-  const filteredIngredients = ingredients.filter(ing => {
-    const matchesSearch = ing.ingrediente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ing.marca?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ing.proveedor?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesGrupo = !filterGrupo || ing.grupo === filterGrupo;
-    const matchesPendientes = !filterPendientes || (!ing.pesoCompra || !ing.precio);
-    return matchesSearch && matchesGrupo && matchesPendientes;
-  });
+  // ========== FILTRADO ==========
+  // Filtrar por nombre (igual que en recetas)
+  const filteredIngredients = ingredients.filter(ing =>
+    ing.ingrediente.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
+  // Aplicar filtros adicionales
+  const calcularListaFiltrada = () => {
+    let resultado = filteredIngredients.slice();
+
+    // Filtro por grupo
+    if (filterGrupo !== '') {
+      resultado = resultado.filter((ing) => ing.grupo === filterGrupo);
+    }
+
+    // Filtro por pendientes
+    if (filterPendientes === true) {
+      resultado = resultado.filter((ing) => !ing.pesoCompra || !ing.precio);
+    }
+
+    return resultado;
+  };
+
+  const listaFiltrada = calcularListaFiltrada();
+
+  // ========== HANDLERS ==========
   const handleDelete = (id) => {
     onDelete(id);
     setDeleteConfirm(null);
   };
 
+  // ========== RENDER ==========
   return (
     <div className="max-w-7xl mx-auto">
-      {/* Header con búsqueda y filtros */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <div className="flex-1 relative">
-          <svg className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          <input
-            type="text"
-            placeholder="Buscar ingrediente, marca o proveedor..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
-          />
-        </div>
+      {/* Header con filtros */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-4">
         <select
           value={filterGrupo}
           onChange={(e) => setFilterGrupo(e.target.value)}
@@ -2317,6 +3201,7 @@ function BancoIngredientes({ ingredients, onAdd, onDelete, onUpdate }) {
         </select>
         {pendientesCount > 0 && (
           <button
+            type="button"
             onClick={() => setFilterPendientes(!filterPendientes)}
             className={`flex items-center gap-2 px-4 py-2.5 border rounded-lg text-sm font-medium transition-colors ${
               filterPendientes 
@@ -2330,7 +3215,9 @@ function BancoIngredientes({ ingredients, onAdd, onDelete, onUpdate }) {
             Pendientes ({pendientesCount})
           </button>
         )}
+        <div className="flex-1"></div>
         <button
+          type="button"
           onClick={() => setShowAddModal(true)}
           className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
         >
@@ -2341,9 +3228,23 @@ function BancoIngredientes({ ingredients, onAdd, onDelete, onUpdate }) {
         </button>
       </div>
 
+      {/* Barra de búsqueda */}
+      <div className="mb-4 relative">
+        <svg className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          type="text"
+          placeholder="Buscar ingrediente..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+        />
+      </div>
+
       {/* Contador */}
       <p className="text-sm text-gray-500 mb-4">
-        {filteredIngredients.length} de {ingredients.length} ingredientes
+        {listaFiltrada.length} de {ingredients.length} ingredientes
         {filterPendientes && ' (mostrando solo pendientes)'}
         {pendientesCount > 0 && !filterPendientes && (
           <span className="text-red-500 ml-2">• {pendientesCount} pendientes</span>
@@ -2367,11 +3268,21 @@ function BancoIngredientes({ ingredients, onAdd, onDelete, onUpdate }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filteredIngredients.map((ing) => {
+              {listaFiltrada.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
+                    {searchTerm ? 'No se encontraron ingredientes' : 'No hay ingredientes'}
+                  </td>
+                </tr>
+              )}
+              {listaFiltrada.length > 0 && listaFiltrada.map((ing) => {
                 const hasPendingFields = !ing.pesoCompra || !ing.precio;
                 const isPendienteValidacion = ing.pendienteValidacion === true;
                 return (
-                  <tr key={ing.id} className={`hover:bg-gray-50 transition-colors ${isPendienteValidacion ? 'bg-yellow-50/50' : hasPendingFields ? 'bg-red-50/30' : ''}`}>
+                  <tr 
+                    key={ing.id} 
+                    className={`hover:bg-gray-50 transition-colors ${isPendienteValidacion ? 'bg-yellow-50/50' : hasPendingFields ? 'bg-red-50/30' : ''}`}
+                  >
                     <td className="px-4 py-3 text-gray-600">{ing.medida}</td>
                     <td className="px-4 py-3 font-medium text-gray-900">
                       {ing.ingrediente}
@@ -2414,6 +3325,7 @@ function BancoIngredientes({ ingredients, onAdd, onDelete, onUpdate }) {
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-center gap-1">
                         <button
+                          type="button"
                           onClick={() => setEditingIngredient(ing)}
                           className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
                           title="Editar"
@@ -2424,6 +3336,7 @@ function BancoIngredientes({ ingredients, onAdd, onDelete, onUpdate }) {
                           </svg>
                         </button>
                         <button
+                          type="button"
                           onClick={() => setDeleteConfirm(ing)}
                           className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                           title="Eliminar"
@@ -2440,12 +3353,6 @@ function BancoIngredientes({ ingredients, onAdd, onDelete, onUpdate }) {
             </tbody>
           </table>
         </div>
-        
-        {filteredIngredients.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
-            No se encontraron ingredientes
-          </div>
-        )}
       </div>
 
       {/* Modal agregar ingrediente */}
@@ -2483,12 +3390,14 @@ function BancoIngredientes({ ingredients, onAdd, onDelete, onUpdate }) {
             </p>
             <div className="flex gap-3 justify-end">
               <button
+                type="button"
                 onClick={() => setDeleteConfirm(null)}
                 className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
                 No
               </button>
               <button
+                type="button"
                 onClick={() => handleDelete(deleteConfirm.id)}
                 className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
               >
@@ -2767,6 +3676,12 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, config
   const [editingRecipe, setEditingRecipe] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [expandedCostos, setExpandedCostos] = useState({});
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Filtrar recetas por búsqueda
+  const filteredRecipes = recipes.filter(recipe => 
+    recipe.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const totales = calcularTotales();
   const costoFijoPorPlato = totales.costoFijoPorPlato;
@@ -2878,7 +3793,7 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, config
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-xl font-semibold text-gray-900">Recetas</h2>
-          <p className="text-sm text-gray-500">{recipes.length} receta{recipes.length !== 1 ? 's' : ''}</p>
+          <p className="text-sm text-gray-500">{filteredRecipes.length} de {recipes.length} receta{recipes.length !== 1 ? 's' : ''}</p>
         </div>
         <button
           onClick={() => setShowNewRecipeModal(true)}
@@ -2891,30 +3806,46 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, config
         </button>
       </div>
 
+      {/* Barra de búsqueda */}
+      <div className="mb-4 relative">
+        <svg className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          type="text"
+          placeholder="Buscar receta..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+        />
+      </div>
+
       {/* Info de costo fijo */}
       <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-between">
         <span className="text-sm text-gray-600">Costo fijo prorrateado por plato:</span>
         <span className="text-sm font-semibold text-gray-900">L{costoFijoPorPlato.toFixed(2)}</span>
       </div>
 
-      {recipes.length === 0 ? (
+      {filteredRecipes.length === 0 ? (
         <div className="text-center py-16 bg-white border border-gray-200 rounded-xl">
           <div className="w-12 h-12 mx-auto mb-4 text-gray-300">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
           </div>
-          <p className="text-gray-500 mb-4">No hay recetas creadas</p>
-          <button
-            onClick={() => setShowNewRecipeModal(true)}
-            className="text-sm text-gray-900 font-medium hover:underline"
-          >
-            Crear primera receta
-          </button>
+          <p className="text-gray-500 mb-4">{searchTerm ? 'No se encontraron recetas' : 'No hay recetas creadas'}</p>
+          {!searchTerm && (
+            <button
+              onClick={() => setShowNewRecipeModal(true)}
+              className="text-sm text-gray-900 font-medium hover:underline"
+            >
+              Crear primera receta
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid gap-4">
-          {recipes.map((recipe) => {
+          {filteredRecipes.map((recipe) => {
             // Costo directo = subrecetas + bases (SIN empaques)
             const costoDirecto = calcularCostoDirecto(recipe);
             // Empaques/materiales
@@ -3247,6 +4178,37 @@ function RecipeDetail({ recipe, ingredients, onBack, onUpdate, calcularCostoSubR
   const [editingSubReceta, setEditingSubReceta] = useState(null);
   const [expandedSubReceta, setExpandedSubReceta] = useState(null);
   const [deleteConfirmSubReceta, setDeleteConfirmSubReceta] = useState(null);
+  
+  // Estados para editar nombre de receta
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState(recipe.nombre);
+
+  // Guardar nuevo nombre
+  const handleSaveName = () => {
+    if (editedName.trim() && editedName.trim() !== recipe.nombre) {
+      const updated = {
+        ...recipe,
+        nombre: editedName.trim().toUpperCase()
+      };
+      onUpdate(updated);
+    }
+    setIsEditingName(false);
+  };
+
+  // Cancelar edición
+  const handleCancelEdit = () => {
+    setEditedName(recipe.nombre);
+    setIsEditingName(false);
+  };
+
+  // Manejar Enter y Escape
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSaveName();
+    } else if (e.key === 'Escape') {
+      handleCancelEdit();
+    }
+  };
 
   const handleAddSubReceta = (subReceta) => {
     const updated = {
@@ -3301,7 +4263,55 @@ function RecipeDetail({ recipe, ingredients, onBack, onUpdate, calcularCostoSubR
       {/* Header */}
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h2 className="text-2xl font-semibold text-gray-900 mb-1">{recipe.nombre}</h2>
+          {isEditingName ? (
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={editedName}
+                onChange={(e) => setEditedName(e.target.value.toUpperCase())}
+                onKeyDown={handleKeyDown}
+                onBlur={handleSaveName}
+                autoFocus
+                className="text-2xl font-semibold text-gray-900 border-b-2 border-orange-500 bg-transparent focus:outline-none px-1"
+                style={{ width: `${Math.max(editedName.length, 5) * 16}px` }}
+              />
+              <button
+                type="button"
+                onClick={handleSaveName}
+                className="p-1 text-green-600 hover:bg-green-50 rounded"
+                title="Guardar"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M5 13l4 4L19 7" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                className="p-1 text-gray-400 hover:bg-gray-100 rounded"
+                title="Cancelar"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-semibold text-gray-900 mb-1">{recipe.nombre}</h2>
+              <button
+                type="button"
+                onClick={() => setIsEditingName(true)}
+                className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                title="Editar nombre"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+              </button>
+            </div>
+          )}
           <p className="text-sm text-gray-500">{recipe.subRecetas.length} sub-receta{recipe.subRecetas.length !== 1 ? 's' : ''}</p>
         </div>
       </div>
