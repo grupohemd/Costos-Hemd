@@ -1372,6 +1372,45 @@ export default function App() {
     }, 0);
   };
 
+  // Sincronizar recetas e ingredientes nuevos del código con Firebase
+  const [syncStatus, setSyncStatus] = useState({ syncing: false, result: null });
+  
+  const handleSyncData = () => {
+    setSyncStatus({ syncing: true, result: null });
+    
+    // Sincronizar ingredientes
+    const existingIngredientIds = new Set(ingredients.map(i => i.id));
+    const newIngredients = initialIngredients.filter(i => !existingIngredientIds.has(i.id));
+    
+    // Sincronizar recetas de Soul Chkn (marca '1')
+    const currentRecetas = recetasPorMarca['1'] || [];
+    const existingRecipeIds = new Set(currentRecetas.map(r => r.id));
+    const newRecipes = initialRecipes.filter(r => !existingRecipeIds.has(r.id));
+    
+    // Aplicar cambios
+    if (newIngredients.length > 0) {
+      setIngredients(prev => [...prev, ...newIngredients]);
+    }
+    
+    if (newRecipes.length > 0) {
+      setRecetasPorMarca(prev => ({
+        ...prev,
+        '1': [...(prev['1'] || []), ...newRecipes]
+      }));
+    }
+    
+    setSyncStatus({ 
+      syncing: false, 
+      result: {
+        newIngredients: newIngredients.length,
+        newRecipes: newRecipes.length
+      }
+    });
+    
+    // Limpiar mensaje después de 5 segundos
+    setTimeout(() => setSyncStatus({ syncing: false, result: null }), 5000);
+  };
+
   // Calcular costo de base Pollo Frito
   const calcularCostoPolloFrito = () => {
     const { muslo, empanizado } = basesReceta.polloFrito;
@@ -1499,6 +1538,9 @@ export default function App() {
           onToggleEmpaque={handleToggleEmpaque}
           calcularCostoEmpaques={calcularCostoEmpaques}
           onUpdateEmpaques={setEmpaques}
+          // Sincronización
+          onSyncData={handleSyncData}
+          syncStatus={syncStatus}
         />
       )}
         </>
@@ -1800,7 +1842,10 @@ function DashboardScreen({
   empaquesPorReceta,
   onToggleEmpaque,
   calcularCostoEmpaques,
-  onUpdateEmpaques
+  onUpdateEmpaques,
+  // Sincronización
+  onSyncData,
+  syncStatus
 }) {
   const [currentModule, setCurrentModule] = useState('menu');
 
@@ -1857,7 +1902,7 @@ function DashboardScreen({
 
       <main className="flex-1 p-6 overflow-auto">
         {currentModule === 'menu' && (
-          <DashboardMenu onSelectModule={setCurrentModule} brand={brand} recipesCount={recetas.length} />
+          <DashboardMenu onSelectModule={setCurrentModule} brand={brand} recipesCount={recetas.length} onSyncData={onSyncData} syncStatus={syncStatus} />
         )}
         {currentModule === 'ingredientes' && (
           <BancoIngredientes 
@@ -1925,7 +1970,7 @@ function DashboardScreen({
 // ============================================
 // MENÚ DEL DASHBOARD
 // ============================================
-function DashboardMenu({ onSelectModule, brand, recipesCount }) {
+function DashboardMenu({ onSelectModule, brand, recipesCount, onSyncData, syncStatus }) {
   const modules = [
     { id: 'recetas', name: 'Recetas y platos', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', description: `${recipesCount} receta${recipesCount !== 1 ? 's' : ''} en ${brand.name}`, badge: null, active: true },
     { id: 'ingredientes', name: 'Banco de Ingredientes', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', description: 'Compartido entre todas las marcas', badge: 'Global', active: true },
@@ -1937,8 +1982,41 @@ function DashboardMenu({ onSelectModule, brand, recipesCount }) {
 
   return (
     <div className="max-w-2xl mx-auto mt-8">
-      <h2 className="text-xl font-semibold text-gray-900 mb-2">Dashboard de {brand.name}</h2>
-      <p className="text-base text-gray-500 mb-8">Selecciona un módulo para comenzar</p>
+      <div className="flex justify-between items-start mb-8">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Dashboard de {brand.name}</h2>
+          <p className="text-base text-gray-500">Selecciona un módulo para comenzar</p>
+        </div>
+        <button
+          onClick={onSyncData}
+          disabled={syncStatus?.syncing}
+          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+        >
+          <svg className={`w-4 h-4 ${syncStatus?.syncing ? 'animate-spin' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          {syncStatus?.syncing ? 'Sincronizando...' : 'Sincronizar datos'}
+        </button>
+      </div>
+      
+      {/* Mensaje de resultado de sincronización */}
+      {syncStatus?.result && (
+        <div className={`mb-6 p-4 rounded-xl border ${
+          syncStatus.result.newRecipes > 0 || syncStatus.result.newIngredients > 0
+            ? 'bg-green-50 border-green-200 text-green-800'
+            : 'bg-gray-50 border-gray-200 text-gray-600'
+        }`}>
+          {syncStatus.result.newRecipes > 0 || syncStatus.result.newIngredients > 0 ? (
+            <p className="text-sm">
+              <span className="font-semibold">✓ Sincronización completada:</span> Se agregaron {syncStatus.result.newRecipes} receta(s) y {syncStatus.result.newIngredients} ingrediente(s) nuevo(s).
+            </p>
+          ) : (
+            <p className="text-sm">
+              <span className="font-semibold">✓ Todo actualizado:</span> No hay recetas ni ingredientes nuevos para agregar.
+            </p>
+          )}
+        </div>
+      )}
       
       <div className="grid gap-3">
         {modules.map((module) => (
