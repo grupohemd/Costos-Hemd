@@ -257,6 +257,20 @@ const initialIngredients = [
   { id: '144', medida: 'gr', ingrediente: 'Mantequilla de mani', pesoCompra: 1130, precio: 154.95, grupo: 'Salsas y derivados', marca: '', proveedor: '', fechaActualizacion: '18/01/2026', pendienteValidacion: true },
   // Ingredientes agregados desde CROQUETA SETAS, NEW YORK SANDWICH, SANSEBASTIAN SANDWICH
   { id: '145', medida: 'gr', ingrediente: 'Polvo hongos', pesoCompra: 65, precio: 17.25, grupo: 'Polvos y sazonadores', marca: '', proveedor: '', fechaActualizacion: '18/01/2026', pendienteValidacion: true },
+  // Ingredientes agregados para bases de Green Memo
+  { id: '146', medida: 'gr', ingrediente: 'Vinagre vino tinto', pesoCompra: 473, precio: 97.15, grupo: 'Salsas y derivados', marca: '', proveedor: '', fechaActualizacion: '18/01/2026', pendienteValidacion: true },
+  { id: '147', medida: 'gr', ingrediente: 'Achiote', pesoCompra: 340, precio: 51.95, grupo: 'Polvos y sazonadores', marca: '', proveedor: '', fechaActualizacion: '18/01/2026', pendienteValidacion: true },
+  { id: '148', medida: 'gr', ingrediente: 'Ajonjoli blanco', pesoCompra: 453, precio: 161.00, grupo: 'Polvos y sazonadores', marca: '', proveedor: '', fechaActualizacion: '18/01/2026', pendienteValidacion: true },
+  { id: '149', medida: 'gr', ingrediente: 'Cascara de limon', pesoCompra: 0, precio: 0, grupo: 'Frutas y verduras', marca: '', proveedor: '', fechaActualizacion: '18/01/2026', pendienteValidacion: true },
+  // Ingredientes agregados para recetas HUMMUS Green Memo
+  { id: '150', medida: 'gr', ingrediente: 'Perejil frito', pesoCompra: 150, precio: 7.90, grupo: 'Frutas y verduras', marca: '', proveedor: '', fechaActualizacion: '18/01/2026', pendienteValidacion: true },
+  // Ingredientes agregados para recetas ZANAHORIA y REPOLLO Green Memo
+  { id: '151', medida: 'gr', ingrediente: 'Crema de queso', pesoCompra: 650, precio: 194.95, grupo: 'Lacteos y derivados', marca: '', proveedor: '', fechaActualizacion: '18/01/2026', pendienteValidacion: true },
+  { id: '152', medida: 'gr', ingrediente: 'Cebolleta', pesoCompra: 453.5, precio: 22.99, grupo: 'Frutas y verduras', marca: '', proveedor: '', fechaActualizacion: '18/01/2026', pendienteValidacion: true },
+  { id: '153', medida: 'gr', ingrediente: 'Nueces', pesoCompra: 1130, precio: 379.95, grupo: 'Frutos secos', marca: '', proveedor: '', fechaActualizacion: '18/01/2026', pendienteValidacion: true },
+  { id: '154', medida: 'und', ingrediente: 'Col', pesoCompra: 1, precio: 40.00, grupo: 'Frutas y verduras', marca: '', proveedor: '', fechaActualizacion: '18/01/2026', pendienteValidacion: true },
+  // Ingredientes agregados para recetas CAMOTE y PAPA BABY Green Memo
+  { id: '155', medida: 'gr', ingrediente: 'Sazon completo', pesoCompra: 2700, precio: 682.95, grupo: 'Polvos y sazonadores', marca: '', proveedor: '', fechaActualizacion: '18/01/2026', pendienteValidacion: true },
 ];
 
 // Recetas iniciales - TGU
@@ -966,6 +980,306 @@ const initialRecipes = [
   }
 ];
 
+// Recetas iniciales - Green Memo
+const initialRecipesGreenMemo = [
+  {
+    id: 'gm1',
+    nombre: 'HUMMUS CLASICO PARA 2',
+    marca: 'Green Memo',
+    subRecetas: [
+      {
+        id: 'sr_hc1',
+        nombre: 'HUMMUS',
+        ingredientes: [
+          { id: 'hc_i1', ingredienteNombre: 'Garbanzos', peso: 375 },
+          { id: 'hc_i2', ingredienteNombre: 'Ajo', peso: 10 },
+          { id: 'hc_i3', ingredienteNombre: 'Hielo', peso: 136 },
+          { id: 'hc_i4', ingredienteNombre: 'Pimienta', peso: 1.6 },
+          { id: 'hc_i5', ingredienteNombre: 'Sal', peso: 6.52 },
+          { id: 'hc_i6', ingredienteNombre: 'Paprika', peso: 1.7 },
+          { id: 'hc_i7', ingredienteNombre: 'Comino', peso: 1.3 },
+          { id: 'hc_i8', ingredienteNombre: 'Tajine', peso: 70 },
+          { id: 'hc_i9', ingredienteNombre: 'Aceite de oliva', peso: 20 },
+          { id: 'hc_i10', ingredienteNombre: 'Limon', peso: 25 },
+        ],
+        pesoReceta: 550,
+        pesoPorcion: 50,
+      },
+      {
+        id: 'sr_hc2',
+        nombre: 'PAN PITA',
+        ingredientes: [
+          { id: 'hc_i11', ingredienteNombre: 'Paprika', peso: 1 },
+          { id: 'hc_i12', ingredienteNombre: 'Pan pita', peso: 4 },
+        ],
+        pesoReceta: 5,
+        pesoPorcion: 5,
+      },
+    ],
+    fechaActualizacion: '18/01/2026'
+  },
+  {
+    id: 'gm2',
+    nombre: 'HUMMUS CON ZAULUK Y AJO BLANCO',
+    marca: 'Green Memo',
+    subRecetas: [
+      {
+        id: 'sr_hz1',
+        nombre: 'ZAULUK',
+        ingredientes: [
+          { id: 'hz_i1', ingredienteNombre: 'Berenjena', peso: 340 },
+          { id: 'hz_i2', ingredienteNombre: 'Cebolla blanca', peso: 456 },
+          { id: 'hz_i3', ingredienteNombre: 'Tomate', peso: 545 },
+          { id: 'hz_i4', ingredienteNombre: 'Agua potable', peso: 250 },
+          { id: 'hz_i5', ingredienteNombre: 'Comino', peso: 1 },
+          { id: 'hz_i6', ingredienteNombre: 'Perejil', peso: 9 },
+          { id: 'hz_i7', ingredienteNombre: 'Cilantro', peso: 15 },
+          { id: 'hz_i8', ingredienteNombre: 'Concentrado de tomate', peso: 50 },
+          { id: 'hz_i9', ingredienteNombre: 'Ajo', peso: 8.5 },
+          { id: 'hz_i10', ingredienteNombre: 'Paprika', peso: 1.7 },
+          { id: 'hz_i11', ingredienteNombre: 'Aceite de oliva', peso: 40 },
+          { id: 'hz_i12', ingredienteNombre: 'Limon', peso: 10 },
+          { id: 'hz_i13', ingredienteNombre: 'Sal', peso: 7 },
+          { id: 'hz_i14', ingredienteNombre: 'Pimienta', peso: 1.6 },
+        ],
+        pesoReceta: 1022,
+        pesoPorcion: 50,
+      },
+      {
+        id: 'sr_hz2',
+        nombre: 'AJO BLANCO',
+        ingredientes: [
+          { id: 'hz_i15', ingredienteNombre: 'Ajo', peso: 8 },
+          { id: 'hz_i16', ingredienteNombre: 'Almendras laminadas', peso: 170 },
+          { id: 'hz_i17', ingredienteNombre: 'Pan bimbo', peso: 58 },
+          { id: 'hz_i18', ingredienteNombre: 'Vinagre vino tinto', peso: 10 },
+          { id: 'hz_i19', ingredienteNombre: 'Agua potable', peso: 360 },
+          { id: 'hz_i20', ingredienteNombre: 'Aceite de oliva', peso: 110 },
+          { id: 'hz_i21', ingredienteNombre: 'Sal', peso: 5.4 },
+          { id: 'hz_i22', ingredienteNombre: 'Pimienta', peso: 1.6 },
+        ],
+        pesoReceta: 550,
+        pesoPorcion: 30,
+      },
+      {
+        id: 'sr_hz3',
+        nombre: 'HUMMUS',
+        ingredientes: [
+          { id: 'hz_i23', ingredienteNombre: 'Garbanzos', peso: 375 },
+          { id: 'hz_i24', ingredienteNombre: 'Ajo', peso: 10 },
+          { id: 'hz_i25', ingredienteNombre: 'Hielo', peso: 136 },
+          { id: 'hz_i26', ingredienteNombre: 'Pimienta', peso: 1.6 },
+          { id: 'hz_i27', ingredienteNombre: 'Sal', peso: 6.52 },
+          { id: 'hz_i28', ingredienteNombre: 'Paprika', peso: 1.7 },
+          { id: 'hz_i29', ingredienteNombre: 'Comino', peso: 1.3 },
+          { id: 'hz_i30', ingredienteNombre: 'Tajine', peso: 70 },
+          { id: 'hz_i31', ingredienteNombre: 'Aceite de oliva', peso: 20 },
+          { id: 'hz_i32', ingredienteNombre: 'Limon', peso: 25 },
+        ],
+        pesoReceta: 550,
+        pesoPorcion: 100,
+      },
+      {
+        id: 'sr_hz4',
+        nombre: 'PAN PITA',
+        ingredientes: [
+          { id: 'hz_i33', ingredienteNombre: 'Paprika', peso: 1 },
+          { id: 'hz_i34', ingredienteNombre: 'Pan pita', peso: 4 },
+          { id: 'hz_i35', ingredienteNombre: 'Perejil frito', peso: 3 },
+          { id: 'hz_i36', ingredienteNombre: 'Paprika', peso: 1 },
+        ],
+        pesoReceta: 9,
+        pesoPorcion: 9,
+      },
+    ],
+    fechaActualizacion: '18/01/2026'
+  },
+  {
+    id: 'gm3',
+    nombre: 'ZANAHORIA',
+    marca: 'Green Memo',
+    subRecetas: [
+      {
+        id: 'sr_za1',
+        nombre: 'RANCH SALUDABLE',
+        ingredientes: [
+          { id: 'za_i1', ingredienteNombre: 'Crema de queso', peso: 60 },
+          { id: 'za_i2', ingredienteNombre: 'Perejil', peso: 2 },
+          { id: 'za_i3', ingredienteNombre: 'Eneldo', peso: 2.7 },
+          { id: 'za_i4', ingredienteNombre: 'Cebolleta', peso: 5 },
+          { id: 'za_i5', ingredienteNombre: 'Yogurt', peso: 90 },
+          { id: 'za_i6', ingredienteNombre: 'Cebolla en polvo', peso: 0.8 },
+          { id: 'za_i7', ingredienteNombre: 'Ajo en polvo', peso: 0.8 },
+          { id: 'za_i8', ingredienteNombre: 'Pimienta', peso: 0.5 },
+          { id: 'za_i9', ingredienteNombre: 'Limon', peso: 2 },
+        ],
+        pesoReceta: 164,
+        pesoPorcion: 30,
+      },
+      {
+        id: 'sr_za2',
+        nombre: 'ACEITE DE PAPRIKA',
+        ingredientes: [
+          { id: 'za_i10', ingredienteNombre: 'Aceite de oliva', peso: 200 },
+          { id: 'za_i11', ingredienteNombre: 'Paprika', peso: 20 },
+        ],
+        pesoReceta: 220,
+        pesoPorcion: 10,
+      },
+      {
+        id: 'sr_za3',
+        nombre: 'TOPPINGS',
+        ingredientes: [
+          { id: 'za_i12', ingredienteNombre: 'Zanahoria', peso: 150 },
+          { id: 'za_i13', ingredienteNombre: 'Nueces', peso: 5 },
+          { id: 'za_i14', ingredienteNombre: 'Cilantro', peso: 3 },
+        ],
+        pesoReceta: 158,
+        pesoPorcion: 158,
+      },
+    ],
+    fechaActualizacion: '18/01/2026'
+  },
+  {
+    id: 'gm4',
+    nombre: 'REPOLLO',
+    marca: 'Green Memo',
+    subRecetas: [
+      {
+        id: 'sr_re1',
+        nombre: 'AJO BLANCO',
+        ingredientes: [
+          { id: 're_i1', ingredienteNombre: 'Ajo', peso: 8 },
+          { id: 're_i2', ingredienteNombre: 'Almendras laminadas', peso: 170 },
+          { id: 're_i3', ingredienteNombre: 'Pan bimbo', peso: 58 },
+          { id: 're_i4', ingredienteNombre: 'Vinagre vino tinto', peso: 10 },
+          { id: 're_i5', ingredienteNombre: 'Agua potable', peso: 360 },
+          { id: 're_i6', ingredienteNombre: 'Aceite de oliva', peso: 110 },
+          { id: 're_i7', ingredienteNombre: 'Sal', peso: 5.4 },
+          { id: 're_i8', ingredienteNombre: 'Pimienta', peso: 1.6 },
+        ],
+        pesoReceta: 550,
+        pesoPorcion: 50,
+      },
+      {
+        id: 'sr_re2',
+        nombre: 'ACEITE PEREJIL',
+        ingredientes: [
+          { id: 're_i9', ingredienteNombre: 'Perejil', peso: 67 },
+          { id: 're_i10', ingredienteNombre: 'Aceite de oliva', peso: 200 },
+        ],
+        pesoReceta: 150,
+        pesoPorcion: 15,
+      },
+      {
+        id: 'sr_re3',
+        nombre: 'TOPPINGS',
+        ingredientes: [
+          { id: 're_i11', ingredienteNombre: 'Panko', peso: 5 },
+          { id: 're_i12', ingredienteNombre: 'Queso parmesano', peso: 5 },
+          { id: 're_i13', ingredienteNombre: 'Col', peso: 0.17 },
+        ],
+        pesoReceta: 10.17,
+        pesoPorcion: 10.17,
+      },
+    ],
+    fechaActualizacion: '18/01/2026'
+  },
+  {
+    id: 'gm5',
+    nombre: 'CAMOTE',
+    marca: 'Green Memo',
+    subRecetas: [
+      {
+        id: 'sr_ca1',
+        nombre: 'PESTO DE ALBAHACA, CILANTRO Y MENTA',
+        ingredientes: [
+          { id: 'ca_i1', ingredienteNombre: 'Menta', peso: 5.5 },
+          { id: 'ca_i2', ingredienteNombre: 'Cilantro', peso: 12 },
+          { id: 'ca_i3', ingredienteNombre: 'Albahaca', peso: 30 },
+          { id: 'ca_i4', ingredienteNombre: 'Aceite de oliva', peso: 200 },
+          { id: 'ca_i5', ingredienteNombre: 'Limon', peso: 10 },
+          { id: 'ca_i6', ingredienteNombre: 'Sal', peso: 3.53 },
+        ],
+        pesoReceta: 210,
+        pesoPorcion: 10,
+      },
+      {
+        id: 'sr_ca2',
+        nombre: 'CREMA DE QUESO',
+        ingredientes: [
+          { id: 'ca_i7', ingredienteNombre: 'Queso feta', peso: 30 },
+          { id: 'ca_i8', ingredienteNombre: 'Queso crema', peso: 200 },
+          { id: 'ca_i9', ingredienteNombre: 'Queso cottage', peso: 100 },
+          { id: 'ca_i10', ingredienteNombre: 'Pimienta', peso: 0.76 },
+          { id: 'ca_i11', ingredienteNombre: 'Sazon completo', peso: 1.87 },
+          { id: 'ca_i12', ingredienteNombre: 'Leche', peso: 60 },
+        ],
+        pesoReceta: 420,
+        pesoPorcion: 50,
+      },
+      {
+        id: 'sr_ca3',
+        nombre: 'TOPPINGS',
+        ingredientes: [
+          { id: 'ca_i13', ingredienteNombre: 'Camote', peso: 150 },
+          { id: 'ca_i14', ingredienteNombre: 'Nueces', peso: 5 },
+        ],
+        pesoReceta: 155,
+        pesoPorcion: 155,
+      },
+    ],
+    fechaActualizacion: '18/01/2026'
+  },
+  {
+    id: 'gm6',
+    nombre: 'PAPA BABY',
+    marca: 'Green Memo',
+    subRecetas: [
+      {
+        id: 'sr_pb1',
+        nombre: 'SALSA TAJIN',
+        ingredientes: [
+          { id: 'pb_i1', ingredienteNombre: 'Yogurt', peso: 150 },
+          { id: 'pb_i2', ingredienteNombre: 'Tajine', peso: 15 },
+          { id: 'pb_i3', ingredienteNombre: 'Limon', peso: 5 },
+          { id: 'pb_i4', ingredienteNombre: 'Aceite de oliva', peso: 30 },
+          { id: 'pb_i5', ingredienteNombre: 'Sal', peso: 1.87 },
+          { id: 'pb_i6', ingredienteNombre: 'Pimienta', peso: 0.76 },
+        ],
+        pesoReceta: 205,
+        pesoPorcion: 30,
+      },
+      {
+        id: 'sr_pb2',
+        nombre: 'SALSA MATCHA',
+        ingredientes: [
+          { id: 'pb_i7', ingredienteNombre: 'Chile california', peso: 15 },
+          { id: 'pb_i8', ingredienteNombre: 'Mani', peso: 80 },
+          { id: 'pb_i9', ingredienteNombre: 'Ajo', peso: 62 },
+          { id: 'pb_i10', ingredienteNombre: 'Cebolla blanca', peso: 142 },
+          { id: 'pb_i11', ingredienteNombre: 'Aceite de oliva', peso: 425 },
+          { id: 'pb_i12', ingredienteNombre: 'Vinagre', peso: 20 },
+          { id: 'pb_i13', ingredienteNombre: 'Sal', peso: 10 },
+          { id: 'pb_i14', ingredienteNombre: 'Glutamato', peso: 7 },
+        ],
+        pesoReceta: 761,
+        pesoPorcion: 30,
+      },
+      {
+        id: 'sr_pb3',
+        nombre: 'PAPA BABY',
+        ingredientes: [
+          { id: 'pb_i15', ingredienteNombre: 'Papa baby', peso: 150 },
+        ],
+        pesoReceta: 150,
+        pesoPorcion: 150,
+      },
+    ],
+    fechaActualizacion: '18/01/2026'
+  }
+];
+
 // ============================================
 // APLICACIÓN PRINCIPAL
 // ============================================
@@ -981,7 +1295,7 @@ export default function App() {
   // Recetas POR MARCA
   const [recetasPorMarca, setRecetasPorMarca] = useState({
     '1': initialRecipes, // Soul Chkn
-    '2': [], // Green Memo
+    '2': initialRecipesGreenMemo, // Green Memo
   });
 
   // Configuración de costos (valores editables)
@@ -1006,80 +1320,193 @@ export default function App() {
     porcentajeISV: 15
   });
 
-  // Bases de receta (editables)
-  const [basesReceta, setBasesReceta] = useState({
-    polloFrito: {
-      id: 'base_pollo',
-      nombre: 'Pollo Frito',
-      activo: true,
-      muslo: {
-        pesoLimpio: 280,
-        pesoCompra: 453,
-        precioCompra: 42.00,
-        merma: 17.5
+  // Bases de receta POR MARCA (editables)
+  const [basesRecetaPorMarca, setBasesRecetaPorMarca] = useState({
+    '1': { // Soul Chkn
+      polloFrito: {
+        id: 'base_pollo',
+        nombre: 'Pollo Frito',
+        activo: true,
+        muslo: {
+          pesoLimpio: 280,
+          pesoCompra: 453,
+          precioCompra: 42.00,
+          merma: 17.5
+        },
+        empanizado: {
+          porciones: 3,
+          ingredientes: [
+            { id: 'emp1', nombre: 'Harina', pesoUsado: 120, pesoCompra: 2267, precioCompra: 102.95 },
+            { id: 'emp2', nombre: 'Maicena', pesoUsado: 120, pesoCompra: 750, precioCompra: 131.53 },
+            { id: 'emp3', nombre: 'Harina PAN', pesoUsado: 60, pesoCompra: 9072, precioCompra: 735.64 },
+            { id: 'emp4', nombre: 'Paprika', pesoUsado: 9, pesoCompra: 453, precioCompra: 154.95 },
+            { id: 'emp5', nombre: 'Ajo en polvo', pesoUsado: 9, pesoCompra: 283, precioCompra: 183.90 },
+            { id: 'emp6', nombre: 'Cebolla en polvo', pesoUsado: 15, pesoCompra: 77.96, precioCompra: 58.90 },
+            { id: 'emp7', nombre: 'Pimienta', pesoUsado: 7.2, pesoCompra: 453, precioCompra: 169.95 },
+            { id: 'emp8', nombre: 'Sal', pesoUsado: 10.59, pesoCompra: 737, precioCompra: 144.95 }
+          ]
+        }
       },
-      empanizado: {
-        porciones: 3,
-        ingredientes: [
-          { id: 'emp1', nombre: 'Harina', pesoUsado: 120, pesoCompra: 2267, precioCompra: 102.95 },
-          { id: 'emp2', nombre: 'Maicena', pesoUsado: 120, pesoCompra: 750, precioCompra: 131.53 },
-          { id: 'emp3', nombre: 'Harina PAN', pesoUsado: 60, pesoCompra: 9072, precioCompra: 735.64 },
-          { id: 'emp4', nombre: 'Paprika', pesoUsado: 9, pesoCompra: 453, precioCompra: 154.95 },
-          { id: 'emp5', nombre: 'Ajo en polvo', pesoUsado: 9, pesoCompra: 283, precioCompra: 183.90 },
-          { id: 'emp6', nombre: 'Cebolla en polvo', pesoUsado: 15, pesoCompra: 77.96, precioCompra: 58.90 },
-          { id: 'emp7', nombre: 'Pimienta', pesoUsado: 7.2, pesoCompra: 453, precioCompra: 169.95 },
-          { id: 'emp8', nombre: 'Sal', pesoUsado: 10.59, pesoCompra: 737, precioCompra: 144.95 }
-        ]
+      polloFritoEnsalada: {
+        id: 'base_pollo_ensalada',
+        nombre: 'Pollo Frito Ensalada y Sandwich',
+        activo: true,
+        muslo: {
+          pesoLimpio: 100,
+          pesoCompra: 453,
+          precioCompra: 42.00,
+          merma: 17.5
+        },
+        empanizado: {
+          porciones: 8,
+          ingredientes: [
+            { id: 'emp1b', nombre: 'Harina', pesoUsado: 120, pesoCompra: 2267, precioCompra: 102.95 },
+            { id: 'emp2b', nombre: 'Maicena', pesoUsado: 120, pesoCompra: 750, precioCompra: 131.53 },
+            { id: 'emp3b', nombre: 'Harina PAN', pesoUsado: 60, pesoCompra: 9072, precioCompra: 735.64 },
+            { id: 'emp4b', nombre: 'Paprika', pesoUsado: 9, pesoCompra: 453, precioCompra: 154.95 },
+            { id: 'emp5b', nombre: 'Ajo en polvo', pesoUsado: 9, pesoCompra: 283, precioCompra: 183.90 },
+            { id: 'emp6b', nombre: 'Cebolla en polvo', pesoUsado: 15, pesoCompra: 77.96, precioCompra: 58.90 },
+            { id: 'emp7b', nombre: 'Pimienta', pesoUsado: 7.2, pesoCompra: 453, precioCompra: 169.95 },
+            { id: 'emp8b', nombre: 'Sal', pesoUsado: 10.59, pesoCompra: 737, precioCompra: 144.95 }
+          ]
+        }
+      },
+      papasFritas: {
+        id: 'base_papas',
+        nombre: 'Papas Fritas',
+        activo: true,
+        pesoPorPorcion: 150,
+        pesoCompra: 13608,
+        precioCompra: 910
       }
     },
-    polloFritoEnsalada: {
-      id: 'base_pollo_ensalada',
-      nombre: 'Pollo Frito Ensalada y Sandwich',
-      activo: true,
-      muslo: {
-        pesoLimpio: 100,
-        pesoCompra: 453,
-        precioCompra: 42.00,
-        merma: 17.5
-      },
-      empanizado: {
-        porciones: 8,
+    '2': { // Green Memo - bases específicas
+      chimichurri: {
+        id: 'base_chimichurri',
+        nombre: 'Chimichurri',
+        activo: true,
+        pesoReceta: 515,
+        pesoPorcion: 15,
         ingredientes: [
-          { id: 'emp1b', nombre: 'Harina', pesoUsado: 120, pesoCompra: 2267, precioCompra: 102.95 },
-          { id: 'emp2b', nombre: 'Maicena', pesoUsado: 120, pesoCompra: 750, precioCompra: 131.53 },
-          { id: 'emp3b', nombre: 'Harina PAN', pesoUsado: 60, pesoCompra: 9072, precioCompra: 735.64 },
-          { id: 'emp4b', nombre: 'Paprika', pesoUsado: 9, pesoCompra: 453, precioCompra: 154.95 },
-          { id: 'emp5b', nombre: 'Ajo en polvo', pesoUsado: 9, pesoCompra: 283, precioCompra: 183.90 },
-          { id: 'emp6b', nombre: 'Cebolla en polvo', pesoUsado: 15, pesoCompra: 77.96, precioCompra: 58.90 },
-          { id: 'emp7b', nombre: 'Pimienta', pesoUsado: 7.2, pesoCompra: 453, precioCompra: 169.95 },
-          { id: 'emp8b', nombre: 'Sal', pesoUsado: 10.59, pesoCompra: 737, precioCompra: 144.95 }
+          { id: 'chim1', nombre: 'Oregano', pesoUsado: 2.66, pesoCompra: 612, precioCompra: 488.75 },
+          { id: 'chim2', nombre: 'Ajo', pesoUsado: 17, pesoCompra: 454, precioCompra: 67.95 },
+          { id: 'chim3', nombre: 'Perejil', pesoUsado: 35, pesoCompra: 50, precioCompra: 19.99 },
+          { id: 'chim4', nombre: 'Cilantro', pesoUsado: 25, pesoCompra: 50, precioCompra: 14.00 },
+          { id: 'chim5', nombre: 'Vinagre vino tinto', pesoUsado: 20, pesoCompra: 473, precioCompra: 97.15 },
+          { id: 'chim6', nombre: 'Aceite de oliva', pesoUsado: 300, pesoCompra: 4600, precioCompra: 1051.00 },
+          { id: 'chim7', nombre: 'Agua hirviendo', pesoUsado: 120, pesoCompra: 5000, precioCompra: 50.00 },
+          { id: 'chim8', nombre: 'Sal', pesoUsado: 6.52, pesoCompra: 737, precioCompra: 139.95 },
+          { id: 'chim9', nombre: 'Pimienta', pesoUsado: 2.4, pesoCompra: 453, precioCompra: 177.95 }
+        ]
+      },
+      pechugaAdobada: {
+        id: 'base_pechuga_adobada',
+        nombre: 'Pechuga Adobada',
+        activo: true,
+        // Esta base tiene sub-recetas que se suman
+        subRecetas: [
+          {
+            nombre: 'Marinado del Pollo',
+            pesoReceta: 1470,
+            pesoPorcion: 25,
+            ingredientes: [
+              { id: 'mar1', nombre: 'Rapadura', pesoUsado: 200, pesoCompra: 1120, precioCompra: 40.90 },
+              { id: 'mar2', nombre: 'Aceite mazola', pesoUsado: 260, pesoCompra: 15875, precioCompra: 940.00 },
+              { id: 'mar3', nombre: 'Vinagre', pesoUsado: 60, pesoCompra: 3700, precioCompra: 129.95 },
+              { id: 'mar4', nombre: 'Salsa Valentina', pesoUsado: 60, pesoCompra: 370, precioCompra: 44.99 },
+              { id: 'mar5', nombre: 'BBQ', pesoUsado: 100, pesoCompra: 2300, precioCompra: 219.95 },
+              { id: 'mar6', nombre: 'Jugo de limon', pesoUsado: 100, pesoCompra: 2250, precioCompra: 109.95 },
+              { id: 'mar7', nombre: 'Cascara de limon', pesoUsado: 240, pesoCompra: 0, precioCompra: 0 },
+              { id: 'mar8', nombre: 'Jugo naranja agria', pesoUsado: 210, pesoCompra: 600, precioCompra: 24.99 },
+              { id: 'mar9', nombre: 'Cebolla blanca', pesoUsado: 225, pesoCompra: 1360, precioCompra: 99.95 },
+              { id: 'mar10', nombre: 'Comino', pesoUsado: 15, pesoCompra: 57, precioCompra: 59.99 },
+              { id: 'mar11', nombre: 'Ajo en polvo', pesoUsado: 18, pesoCompra: 680, precioCompra: 199.95 },
+              { id: 'mar12', nombre: 'Cebolla en polvo', pesoUsado: 14.5, pesoCompra: 77.96, precioCompra: 58.90 },
+              { id: 'mar13', nombre: 'Sal', pesoUsado: 17, pesoCompra: 2948, precioCompra: 139.95 },
+              { id: 'mar14', nombre: 'Mostaza', pesoUsado: 60, pesoCompra: 190, precioCompra: 29.99 },
+              { id: 'mar15', nombre: 'Pimienta', pesoUsado: 5, pesoCompra: 453, precioCompra: 169.95 },
+              { id: 'mar16', nombre: 'Paprika', pesoUsado: 16, pesoCompra: 453, precioCompra: 154.95 },
+              { id: 'mar17', nombre: 'Mantequilla en barra', pesoUsado: 180, pesoCompra: 454, precioCompra: 244.95 },
+              { id: 'mar18', nombre: 'Ajo', pesoUsado: 25, pesoCompra: 454, precioCompra: 59.95 }
+            ]
+          },
+          {
+            nombre: 'Pechuga con Achiote',
+            pesoReceta: 320.8,
+            pesoPorcion: 320.8,
+            ingredientes: [
+              { id: 'pech1', nombre: 'Pechuga de pollo', pesoUsado: 320, pesoCompra: 453, precioCompra: 60.00 },
+              { id: 'pech2', nombre: 'Achiote', pesoUsado: 0.8, pesoCompra: 340, precioCompra: 51.95 }
+            ]
+          }
+        ]
+      },
+      filete: {
+        id: 'base_filete',
+        nombre: 'Filete a la Parrilla',
+        activo: true,
+        pesoReceta: 150,
+        pesoPorcion: 150,
+        ingredientes: [
+          { id: 'fil1', nombre: 'Filete', pesoUsado: 150, pesoCompra: 453, precioCompra: 225.00 }
+        ]
+      },
+      mezclumLechugas: {
+        id: 'base_mezclum',
+        nombre: 'Mezclum de Lechugas',
+        activo: true,
+        // Esta base tiene sub-recetas que se suman
+        subRecetas: [
+          {
+            nombre: 'Vinagreta',
+            pesoReceta: 136.53,
+            pesoPorcion: 10,
+            ingredientes: [
+              { id: 'vin1', nombre: 'Aceite de oliva', pesoUsado: 100, pesoCompra: 4600, precioCompra: 1051.00 },
+              { id: 'vin2', nombre: 'Vinagre blanco', pesoUsado: 33, pesoCompra: 3700, precioCompra: 129.95 },
+              { id: 'vin3', nombre: 'Sal', pesoUsado: 3.53, pesoCompra: 2948, precioCompra: 139.95 }
+            ]
+          },
+          {
+            nombre: 'Mezclum Lechugas',
+            pesoReceta: 30,
+            pesoPorcion: 30,
+            ingredientes: [
+              { id: 'mez1', nombre: 'Lechuga romana', pesoUsado: 15, pesoCompra: 300, precioCompra: 20.00 },
+              { id: 'mez2', nombre: 'Lechuga escarola', pesoUsado: 15, pesoCompra: 800, precioCompra: 41.95 }
+            ]
+          },
+          {
+            nombre: 'Toppings',
+            pesoReceta: 0.4,
+            pesoPorcion: 0.4,
+            ingredientes: [
+              { id: 'top1', nombre: 'Ajonjoli blanco', pesoUsado: 0.2, pesoCompra: 453, precioCompra: 161.00 },
+              { id: 'top2', nombre: 'Linaza', pesoUsado: 0.2, pesoCompra: 280, precioCompra: 38.95 }
+            ]
+          }
         ]
       }
-    },
-    papasFritas: {
-      id: 'base_papas',
-      nombre: 'Papas Fritas',
-      activo: true,
-      pesoPorPorcion: 150,
-      pesoCompra: 13608, // 30 lb en gramos
-      precioCompra: 910
     }
   });
 
   // Bases activadas por receta (objeto: { recetaId: { polloFrito: true/false, papasFritas: true/false } })
   const [basesPorReceta, setBasesPorReceta] = useState({});
 
-  // Empaques/Materiales disponibles
-  const [empaques, setEmpaques] = useState([
-    { id: 'emp_pollo', nombre: 'Empaques Pollo', precio: 7.00 },
-    { id: 'emp_papel', nombre: 'Papel', precio: 0.975 },
-    { id: 'emp_tenedor', nombre: 'Tenedor Entrantes', precio: 1.50 },
-    { id: 'emp_bolsa_papitas', nombre: 'Bolsa Papitas', precio: 1.10 },
-    { id: 'emp_servilleta', nombre: 'Servilleta', precio: 0.60 },
-    { id: 'emp_guante', nombre: 'Guante', precio: 0.60 },
-    { id: 'emp_entrantes', nombre: 'Empaques Entrantes', precio: 8.11 },
-    { id: 'emp_bolsa', nombre: 'Bolsa', precio: 3.78 }
-  ]);
+  // Empaques/Materiales POR MARCA
+  const [empaquesPorMarca, setEmpaquesPorMarca] = useState({
+    '1': [ // Soul Chkn
+      { id: 'emp_pollo', nombre: 'Empaques Pollo', precio: 7.00 },
+      { id: 'emp_papel', nombre: 'Papel', precio: 0.975 },
+      { id: 'emp_tenedor', nombre: 'Tenedor Entrantes', precio: 1.50 },
+      { id: 'emp_bolsa_papitas', nombre: 'Bolsa Papitas', precio: 1.10 },
+      { id: 'emp_servilleta', nombre: 'Servilleta', precio: 0.60 },
+      { id: 'emp_guante', nombre: 'Guante', precio: 0.60 },
+      { id: 'emp_entrantes', nombre: 'Empaques Entrantes', precio: 8.11 },
+      { id: 'emp_bolsa', nombre: 'Bolsa', precio: 3.78 }
+    ],
+    '2': [] // Green Memo - vacío inicialmente
+  });
 
   // Empaques activados por receta (objeto: { recetaId: { emp_pollo: true/false, emp_papel: true/false, ... } })
   const [empaquesPorReceta, setEmpaquesPorReceta] = useState({});
@@ -1124,9 +1551,33 @@ export default function App() {
         if (data.recetasPorMarca) setRecetasPorMarca(data.recetasPorMarca);
         if (data.brands) setBrands(data.brands);
         if (data.configCostos) setConfigCostos(data.configCostos);
-        if (data.basesReceta) setBasesReceta(data.basesReceta);
+        
+        // Migración: Si hay datos en formato antiguo, convertirlos
+        if (data.basesRecetaPorMarca) {
+          setBasesRecetaPorMarca(data.basesRecetaPorMarca);
+        } else if (data.basesReceta) {
+          // Migrar formato antiguo: basesReceta global → basesRecetaPorMarca
+          console.log('Migrando basesReceta a formato por marca...');
+          setBasesRecetaPorMarca({
+            '1': data.basesReceta,
+            '2': { polloFrito: null, polloFritoEnsalada: null, papasFritas: null }
+          });
+        }
+        
         if (data.basesPorReceta) setBasesPorReceta(data.basesPorReceta);
-        if (data.empaques) setEmpaques(data.empaques);
+        
+        // Migración: Si hay empaques en formato antiguo, convertirlos
+        if (data.empaquesPorMarca) {
+          setEmpaquesPorMarca(data.empaquesPorMarca);
+        } else if (data.empaques) {
+          // Migrar formato antiguo: empaques global → empaquesPorMarca
+          console.log('Migrando empaques a formato por marca...');
+          setEmpaquesPorMarca({
+            '1': data.empaques,
+            '2': []
+          });
+        }
+        
         if (data.empaquesPorReceta) setEmpaquesPorReceta(data.empaquesPorReceta);
         if (data.deliveryPorReceta) setDeliveryPorReceta(data.deliveryPorReceta);
         if (data.isvPorReceta) setIsvPorReceta(data.isvPorReceta);
@@ -1142,9 +1593,9 @@ export default function App() {
           },
           brands: mockDB.brands,
           configCostos,
-          basesReceta,
+          basesRecetaPorMarca,
           basesPorReceta: {},
-          empaques,
+          empaquesPorMarca,
           empaquesPorReceta: {},
           deliveryPorReceta: {},
           isvPorReceta: {},
@@ -1178,9 +1629,9 @@ export default function App() {
         recetasPorMarca,
         brands,
         configCostos,
-        basesReceta,
+        basesRecetaPorMarca,
         basesPorReceta,
-        empaques,
+        empaquesPorMarca,
         empaquesPorReceta,
         deliveryPorReceta,
         isvPorReceta,
@@ -1189,7 +1640,7 @@ export default function App() {
     }, 1000); // Esperar 1 segundo antes de guardar
     
     return () => clearTimeout(timeoutId);
-  }, [ingredients, recetasPorMarca, brands, configCostos, basesReceta, basesPorReceta, empaques, empaquesPorReceta, deliveryPorReceta, isvPorReceta, precioVentaPorReceta, isLoading]);
+  }, [ingredients, recetasPorMarca, brands, configCostos, basesRecetaPorMarca, basesPorReceta, empaquesPorMarca, empaquesPorReceta, deliveryPorReceta, isvPorReceta, precioVentaPorReceta, isLoading]);
 
   const handleLogin = (user) => {
     setCurrentUser(user);
@@ -1335,9 +1786,12 @@ export default function App() {
     }));
   };
 
-  // Handlers para bases de receta
-  const handleUpdateBasesReceta = (newBases) => {
-    setBasesReceta(newBases);
+  // Handlers para bases de receta (por marca)
+  const handleUpdateBasesReceta = (marcaId, newBases) => {
+    setBasesRecetaPorMarca(prev => ({
+      ...prev,
+      [marcaId]: newBases
+    }));
   };
 
   const handleToggleBaseReceta = (recetaId, baseKey) => {
@@ -1347,6 +1801,14 @@ export default function App() {
         ...prev[recetaId],
         [baseKey]: !(prev[recetaId]?.[baseKey] || false)
       }
+    }));
+  };
+
+  // Handlers para empaques (por marca)
+  const handleUpdateEmpaques = (marcaId, newEmpaques) => {
+    setEmpaquesPorMarca(prev => ({
+      ...prev,
+      [marcaId]: newEmpaques
     }));
   };
 
@@ -1362,9 +1824,10 @@ export default function App() {
   };
 
   // Calcular costo total de empaques seleccionados para una receta
-  const calcularCostoEmpaques = (recetaId) => {
+  const calcularCostoEmpaques = (recetaId, marcaId) => {
     const empaquesActivos = empaquesPorReceta[recetaId] || {};
-    return empaques.reduce((sum, emp) => {
+    const empaquesMarca = empaquesPorMarca[marcaId] || [];
+    return empaquesMarca.reduce((sum, emp) => {
       if (empaquesActivos[emp.id]) {
         return sum + emp.precio;
       }
@@ -1383,19 +1846,25 @@ export default function App() {
     const newIngredients = initialIngredients.filter(i => !existingIngredientIds.has(i.id));
     
     // Sincronizar recetas de Soul Chkn (marca '1')
-    const currentRecetas = recetasPorMarca['1'] || [];
-    const existingRecipeIds = new Set(currentRecetas.map(r => r.id));
-    const newRecipes = initialRecipes.filter(r => !existingRecipeIds.has(r.id));
+    const currentRecetasSC = recetasPorMarca['1'] || [];
+    const existingRecipeIdsSC = new Set(currentRecetasSC.map(r => r.id));
+    const newRecipesSC = initialRecipes.filter(r => !existingRecipeIdsSC.has(r.id));
+    
+    // Sincronizar recetas de Green Memo (marca '2')
+    const currentRecetasGM = recetasPorMarca['2'] || [];
+    const existingRecipeIdsGM = new Set(currentRecetasGM.map(r => r.id));
+    const newRecipesGM = initialRecipesGreenMemo.filter(r => !existingRecipeIdsGM.has(r.id));
     
     // Aplicar cambios
     if (newIngredients.length > 0) {
       setIngredients(prev => [...prev, ...newIngredients]);
     }
     
-    if (newRecipes.length > 0) {
+    if (newRecipesSC.length > 0 || newRecipesGM.length > 0) {
       setRecetasPorMarca(prev => ({
         ...prev,
-        '1': [...(prev['1'] || []), ...newRecipes]
+        '1': newRecipesSC.length > 0 ? [...(prev['1'] || []), ...newRecipesSC] : prev['1'],
+        '2': newRecipesGM.length > 0 ? [...(prev['2'] || []), ...newRecipesGM] : prev['2']
       }));
     }
     
@@ -1403,7 +1872,7 @@ export default function App() {
       syncing: false, 
       result: {
         newIngredients: newIngredients.length,
-        newRecipes: newRecipes.length
+        newRecipes: newRecipesSC.length + newRecipesGM.length
       }
     });
     
@@ -1411,8 +1880,10 @@ export default function App() {
     setTimeout(() => setSyncStatus({ syncing: false, result: null }), 5000);
   };
 
-  // Calcular costo de base Pollo Frito
-  const calcularCostoPolloFrito = () => {
+  // Calcular costo de base Pollo Frito (por marca)
+  const calcularCostoPolloFrito = (marcaId) => {
+    const basesReceta = basesRecetaPorMarca[marcaId];
+    if (!basesReceta?.polloFrito) return 0;
     const { muslo, empanizado } = basesReceta.polloFrito;
     // Costo del muslo (proporcional al peso usado)
     const costoMuslo = (muslo.pesoLimpio / muslo.pesoCompra) * muslo.precioCompra;
@@ -1425,8 +1896,10 @@ export default function App() {
     return costoMuslo + costoEmpanizadoPorPorcion;
   };
 
-  // Calcular costo de base Pollo Frito Ensalada y Sandwich
-  const calcularCostoPolloFritoEnsalada = () => {
+  // Calcular costo de base Pollo Frito Ensalada y Sandwich (por marca)
+  const calcularCostoPolloFritoEnsalada = (marcaId) => {
+    const basesReceta = basesRecetaPorMarca[marcaId];
+    if (!basesReceta?.polloFritoEnsalada) return 0;
     const { muslo, empanizado } = basesReceta.polloFritoEnsalada;
     // Costo del muslo (proporcional al peso usado)
     const costoMuslo = (muslo.pesoLimpio / muslo.pesoCompra) * muslo.precioCompra;
@@ -1439,11 +1912,68 @@ export default function App() {
     return costoMuslo + costoEmpanizadoPorPorcion;
   };
 
-  // Calcular costo de base Papas Fritas
-  const calcularCostoPapasFritas = () => {
+  // Calcular costo de base Papas Fritas (por marca)
+  const calcularCostoPapasFritas = (marcaId) => {
+    const basesReceta = basesRecetaPorMarca[marcaId];
+    if (!basesReceta?.papasFritas) return 0;
     const { pesoPorPorcion, pesoCompra, precioCompra } = basesReceta.papasFritas;
     const costoPorGramo = precioCompra / pesoCompra;
     return costoPorGramo * pesoPorPorcion;
+  };
+
+  // Calcular costo de una base simple (estructura con ingredientes) - usado para Green Memo
+  const calcularCostoBaseSimple = (base) => {
+    if (!base) return 0;
+    
+    // Si tiene subRecetas, calcular la suma de todas
+    if (base.subRecetas && base.subRecetas.length > 0) {
+      return base.subRecetas.reduce((total, subReceta) => {
+        const costoSubReceta = subReceta.ingredientes.reduce((sum, ing) => {
+          if (ing.pesoCompra === 0) return sum;
+          return sum + (ing.pesoUsado / ing.pesoCompra) * ing.precioCompra;
+        }, 0);
+        const costoPorcion = (costoSubReceta / subReceta.pesoReceta) * subReceta.pesoPorcion;
+        return total + costoPorcion;
+      }, 0);
+    }
+    
+    // Si tiene ingredientes directos (base simple)
+    if (!base.ingredientes || !base.pesoReceta || !base.pesoPorcion) return 0;
+    const costoReceta = base.ingredientes.reduce((sum, ing) => {
+      if (ing.pesoCompra === 0) return sum;
+      return sum + (ing.pesoUsado / ing.pesoCompra) * ing.precioCompra;
+    }, 0);
+    const costoPorcion = (costoReceta / base.pesoReceta) * base.pesoPorcion;
+    return costoPorcion;
+  };
+
+  // Calcular costo total de bases activas para una receta (por marca)
+  const calcularCostoBases = (recetaId, marcaId) => {
+    const basesActivas = basesPorReceta[recetaId] || {};
+    const basesReceta = basesRecetaPorMarca[marcaId] || {};
+    let costoTotal = 0;
+    
+    // Para Soul Chkn (marca '1') - estructura especial
+    if (marcaId === '1') {
+      if (basesActivas.polloFrito && basesReceta.polloFrito) {
+        costoTotal += calcularCostoPolloFrito(marcaId);
+      }
+      if (basesActivas.polloFritoEnsalada && basesReceta.polloFritoEnsalada) {
+        costoTotal += calcularCostoPolloFritoEnsalada(marcaId);
+      }
+      if (basesActivas.papasFritas && basesReceta.papasFritas) {
+        costoTotal += calcularCostoPapasFritas(marcaId);
+      }
+    } else {
+      // Para otras marcas (Green Memo, etc.) - estructura simple
+      Object.keys(basesActivas).forEach(baseKey => {
+        if (basesActivas[baseKey] && basesReceta[baseKey]) {
+          costoTotal += calcularCostoBaseSimple(basesReceta[baseKey]);
+        }
+      });
+    }
+    
+    return costoTotal;
   };
 
   // Cálculos derivados de costos
@@ -1517,31 +2047,33 @@ export default function App() {
               configCostos={configCostos}
               onUpdateConfigCostos={handleUpdateConfigCostos}
               deliveryPorReceta={deliveryPorReceta}
-          onToggleDelivery={handleToggleDelivery}
-          isvPorReceta={isvPorReceta}
-          onToggleISV={handleToggleISV}
-          precioVentaPorReceta={precioVentaPorReceta}
-          onUpdatePrecioVenta={handleUpdatePrecioVenta}
-          onUpdatePrecioCliente={handleUpdatePrecioCliente}
-          calcularTotales={calcularTotales}
-          // Bases de receta
-          basesReceta={basesReceta}
-          onUpdateBasesReceta={handleUpdateBasesReceta}
-          basesPorReceta={basesPorReceta}
-          onToggleBaseReceta={handleToggleBaseReceta}
-          calcularCostoPolloFrito={calcularCostoPolloFrito}
-          calcularCostoPolloFritoEnsalada={calcularCostoPolloFritoEnsalada}
-          calcularCostoPapasFritas={calcularCostoPapasFritas}
-          // Empaques/Materiales
-          empaques={empaques}
-          empaquesPorReceta={empaquesPorReceta}
-          onToggleEmpaque={handleToggleEmpaque}
-          calcularCostoEmpaques={calcularCostoEmpaques}
-          onUpdateEmpaques={setEmpaques}
-          // Sincronización
-          onSyncData={handleSyncData}
-          syncStatus={syncStatus}
-        />
+              onToggleDelivery={handleToggleDelivery}
+              isvPorReceta={isvPorReceta}
+              onToggleISV={handleToggleISV}
+              precioVentaPorReceta={precioVentaPorReceta}
+              onUpdatePrecioVenta={handleUpdatePrecioVenta}
+              onUpdatePrecioCliente={handleUpdatePrecioCliente}
+              calcularTotales={calcularTotales}
+              // Bases de receta (por marca)
+              basesReceta={basesRecetaPorMarca[selectedBrand?.id] || {}}
+              onUpdateBasesReceta={(newBases) => handleUpdateBasesReceta(selectedBrand?.id, newBases)}
+              basesPorReceta={basesPorReceta}
+              onToggleBaseReceta={handleToggleBaseReceta}
+              calcularCostoPolloFrito={() => calcularCostoPolloFrito(selectedBrand?.id)}
+              calcularCostoPolloFritoEnsalada={() => calcularCostoPolloFritoEnsalada(selectedBrand?.id)}
+              calcularCostoPapasFritas={() => calcularCostoPapasFritas(selectedBrand?.id)}
+              calcularCostoBaseSimple={calcularCostoBaseSimple}
+              calcularCostoBases={(recetaId) => calcularCostoBases(recetaId, selectedBrand?.id)}
+              // Empaques/Materiales (por marca)
+              empaques={empaquesPorMarca[selectedBrand?.id] || []}
+              empaquesPorReceta={empaquesPorReceta}
+              onToggleEmpaque={handleToggleEmpaque}
+              calcularCostoEmpaques={(recetaId) => calcularCostoEmpaques(recetaId, selectedBrand?.id)}
+              onUpdateEmpaques={(newEmpaques) => handleUpdateEmpaques(selectedBrand?.id, newEmpaques)}
+              // Sincronización
+              onSyncData={handleSyncData}
+              syncStatus={syncStatus}
+            />
       )}
         </>
       )}
@@ -1837,6 +2369,8 @@ function DashboardScreen({
   calcularCostoPolloFrito,
   calcularCostoPolloFritoEnsalada,
   calcularCostoPapasFritas,
+  calcularCostoBaseSimple,
+  calcularCostoBases,
   // Empaques/Materiales
   empaques,
   empaquesPorReceta,
@@ -1934,6 +2468,9 @@ function DashboardScreen({
             calcularCostoPolloFrito={calcularCostoPolloFrito}
             calcularCostoPolloFritoEnsalada={calcularCostoPolloFritoEnsalada}
             calcularCostoPapasFritas={calcularCostoPapasFritas}
+            calcularCostoBaseSimple={calcularCostoBaseSimple}
+            calcularCostoBases={calcularCostoBases}
+            brand={brand}
             empaques={empaques}
             empaquesPorReceta={empaquesPorReceta}
             onToggleEmpaque={onToggleEmpaque}
@@ -1954,6 +2491,8 @@ function DashboardScreen({
             calcularCostoPolloFrito={calcularCostoPolloFrito}
             calcularCostoPolloFritoEnsalada={calcularCostoPolloFritoEnsalada}
             calcularCostoPapasFritas={calcularCostoPapasFritas}
+            calcularCostoBaseSimple={calcularCostoBaseSimple}
+            brand={brand}
           />
         )}
         {currentModule === 'empaques' && (
@@ -2481,10 +3020,26 @@ function ConfiguracionCostos({ configCostos, onUpdateConfigCostos, calcularTotal
 // ============================================
 // BASES DE RECETA
 // ============================================
-function BasesRecetaModule({ basesReceta, onUpdateBasesReceta, calcularCostoPolloFrito, calcularCostoPolloFritoEnsalada, calcularCostoPapasFritas }) {
+function BasesRecetaModule({ basesReceta, onUpdateBasesReceta, calcularCostoPolloFrito, calcularCostoPolloFritoEnsalada, calcularCostoPapasFritas, calcularCostoBaseSimple, brand }) {
   const [editMode, setEditMode] = useState(false);
   const [tempBases, setTempBases] = useState(basesReceta);
-  const [expandedBase, setExpandedBase] = useState(null); // null, 'pollo', 'polloEnsalada', 'papas'
+  const [expandedBase, setExpandedBase] = useState(null); // null, 'pollo', 'polloEnsalada', 'papas', o cualquier baseKey
+
+  // Detectar si es Soul Chkn (marca '1') o Green Memo (marca '2')
+  const esSoulChkn = brand?.id === '1';
+  const esGreenMemo = brand?.id === '2';
+
+  // Verificar si hay bases configuradas (Soul Chkn)
+  const tienePolloFrito = basesReceta?.polloFrito !== null && basesReceta?.polloFrito !== undefined;
+  const tienePolloEnsalada = basesReceta?.polloFritoEnsalada !== null && basesReceta?.polloFritoEnsalada !== undefined;
+  const tienePapas = basesReceta?.papasFritas !== null && basesReceta?.papasFritas !== undefined;
+  const tieneAlgunaBaseSoulChkn = tienePolloFrito || tienePolloEnsalada || tienePapas;
+
+  // Obtener bases de Green Memo (con ingredientes o subRecetas)
+  const basesGreenMemo = esGreenMemo ? Object.entries(basesReceta || {}).filter(([key, val]) => val !== null && (val?.ingredientes || val?.subRecetas)) : [];
+  const tieneAlgunaBaseGreenMemo = basesGreenMemo.length > 0;
+  
+  const tieneAlgunaBase = esSoulChkn ? tieneAlgunaBaseSoulChkn : tieneAlgunaBaseGreenMemo;
 
   const toggleBase = (base) => {
     setExpandedBase(expandedBase === base ? null : base);
@@ -2501,12 +3056,13 @@ function BasesRecetaModule({ basesReceta, onUpdateBasesReceta, calcularCostoPoll
   };
 
   const bases = editMode ? tempBases : basesReceta;
-  const costoPolloFrito = calcularCostoPolloFrito();
-  const costoPolloFritoEnsalada = calcularCostoPolloFritoEnsalada();
-  const costoPapasFritas = calcularCostoPapasFritas();
+  const costoPolloFrito = tienePolloFrito ? calcularCostoPolloFrito() : 0;
+  const costoPolloFritoEnsalada = tienePolloEnsalada ? calcularCostoPolloFritoEnsalada() : 0;
+  const costoPapasFritas = tienePapas ? calcularCostoPapasFritas() : 0;
 
   // Actualizar muslo de pollo
   const updateMuslo = (field, value) => {
+    if (!tempBases?.polloFrito) return;
     setTempBases({
       ...tempBases,
       polloFrito: {
@@ -2521,6 +3077,7 @@ function BasesRecetaModule({ basesReceta, onUpdateBasesReceta, calcularCostoPoll
 
   // Actualizar ingrediente del empanizado
   const updateEmpanizadoIngrediente = (ingId, field, value) => {
+    if (!tempBases?.polloFrito?.empanizado) return;
     setTempBases({
       ...tempBases,
       polloFrito: {
@@ -2537,6 +3094,7 @@ function BasesRecetaModule({ basesReceta, onUpdateBasesReceta, calcularCostoPoll
 
   // Actualizar porciones del empanizado
   const updateEmpanizadoPorciones = (value) => {
+    if (!tempBases?.polloFrito?.empanizado) return;
     setTempBases({
       ...tempBases,
       polloFrito: {
@@ -2551,6 +3109,7 @@ function BasesRecetaModule({ basesReceta, onUpdateBasesReceta, calcularCostoPoll
 
   // Actualizar papas fritas
   const updatePapas = (field, value) => {
+    if (!tempBases?.papasFritas) return;
     setTempBases({
       ...tempBases,
       papasFritas: {
@@ -2562,6 +3121,7 @@ function BasesRecetaModule({ basesReceta, onUpdateBasesReceta, calcularCostoPoll
 
   // Calcular costo del empanizado por porción para mostrar
   const calcularCostoEmpanizadoPorcion = () => {
+    if (!bases?.polloFrito?.empanizado) return 0;
     const { empanizado } = bases.polloFrito;
     const costoTotal = empanizado.ingredientes.reduce((sum, ing) => {
       return sum + (ing.pesoUsado / ing.pesoCompra) * ing.precioCompra;
@@ -2606,7 +3166,19 @@ function BasesRecetaModule({ basesReceta, onUpdateBasesReceta, calcularCostoPoll
         )}
       </div>
 
+      {/* Mensaje cuando no hay bases configuradas */}
+      {!tieneAlgunaBase && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
+          <p className="text-amber-800 font-medium mb-2">No hay bases de receta configuradas para esta marca</p>
+          <p className="text-amber-600 text-sm">Las bases de receta (pollo frito, papas, etc.) se configuran de forma independiente por marca.</p>
+        </div>
+      )}
+
+      {/* ====== BASES DE SOUL CHKN ====== */}
+      {esSoulChkn && (
+      <>
       {/* BASE: Pollo Frito */}
+      {tienePolloFrito && (
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-6">
         <button 
           onClick={() => toggleBase('pollo')}
@@ -2775,8 +3347,10 @@ function BasesRecetaModule({ basesReceta, onUpdateBasesReceta, calcularCostoPoll
           </>
         )}
       </div>
+      )}
 
       {/* BASE: Pollo Frito Ensalada y Sandwich */}
+      {tienePolloEnsalada && (
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-6">
         <button 
           onClick={() => toggleBase('polloEnsalada')}
@@ -2874,8 +3448,10 @@ function BasesRecetaModule({ basesReceta, onUpdateBasesReceta, calcularCostoPoll
           </>
         )}
       </div>
+      )}
 
       {/* BASE: Papas Fritas */}
+      {tienePapas && (
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-6">
         <button 
           onClick={() => toggleBase('papas')}
@@ -2954,14 +3530,175 @@ function BasesRecetaModule({ basesReceta, onUpdateBasesReceta, calcularCostoPoll
         </div>
         )}
       </div>
+      )}
+      </>
+      )}
+
+      {/* ====== BASES DE GREEN MEMO ====== */}
+      {esGreenMemo && tieneAlgunaBaseGreenMemo && (
+        <>
+          {basesGreenMemo.map(([baseKey, base]) => (
+            <div key={baseKey} className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-6">
+              <button 
+                onClick={() => toggleBase(baseKey)}
+                className="w-full px-5 py-4 bg-gray-50 hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <svg 
+                      className={`w-5 h-5 text-gray-500 transition-transform ${expandedBase === baseKey ? 'rotate-90' : ''}`} 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2"
+                    >
+                      <path d="M9 18l6-6-6-6" />
+                    </svg>
+                    <h3 className="text-base font-semibold text-gray-900">Base: {base.nombre}</h3>
+                  </div>
+                  <span className="text-sm font-bold text-gray-700">L{calcularCostoBaseSimple(base).toFixed(2)} / porción</span>
+                </div>
+              </button>
+
+              {expandedBase === baseKey && (
+                <div className="p-5">
+                  {/* Si tiene subRecetas, mostrar cada una */}
+                  {base.subRecetas ? (
+                    <div className="space-y-6">
+                      {base.subRecetas.map((subReceta, idx) => {
+                        const costoSubReceta = subReceta.ingredientes.reduce((sum, ing) => {
+                          return sum + (ing.pesoCompra > 0 ? (ing.pesoUsado / ing.pesoCompra) * ing.precioCompra : 0);
+                        }, 0);
+                        const costoPorcion = (costoSubReceta / subReceta.pesoReceta) * subReceta.pesoPorcion;
+                        return (
+                          <div key={idx} className="border border-gray-100 rounded-lg overflow-hidden">
+                            <div className="bg-gray-50 px-4 py-2 flex justify-between items-center">
+                              <h4 className="text-sm font-semibold text-gray-700">{subReceta.nombre}</h4>
+                              <span className="text-xs text-gray-500">
+                                {subReceta.pesoReceta}g receta → {subReceta.pesoPorcion}g porción = <span className="font-semibold text-gray-700">L{costoPorcion.toFixed(2)}</span>
+                              </span>
+                            </div>
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-sm">
+                                <thead>
+                                  <tr className="border-b border-gray-100">
+                                    <th className="text-left py-2 px-3 font-medium text-gray-600">Ingrediente</th>
+                                    <th className="text-right py-2 px-3 font-medium text-gray-600">Peso</th>
+                                    <th className="text-right py-2 px-3 font-medium text-gray-600">Peso Compra</th>
+                                    <th className="text-right py-2 px-3 font-medium text-gray-600">Precio</th>
+                                    <th className="text-right py-2 px-3 font-medium text-gray-600">Costo</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {subReceta.ingredientes.map((ing) => {
+                                    const costoIng = ing.pesoCompra > 0 ? (ing.pesoUsado / ing.pesoCompra) * ing.precioCompra : 0;
+                                    return (
+                                      <tr key={ing.id} className="border-b border-gray-50">
+                                        <td className="py-2 px-3 text-gray-900">{ing.nombre}</td>
+                                        <td className="py-2 px-3 text-right text-gray-600">{ing.pesoUsado}g</td>
+                                        <td className="py-2 px-3 text-right text-gray-600">{ing.pesoCompra}g</td>
+                                        <td className="py-2 px-3 text-right text-gray-600">L{ing.precioCompra.toFixed(2)}</td>
+                                        <td className="py-2 px-3 text-right font-medium text-gray-900">L{costoIng.toFixed(2)}</td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                                <tfoot>
+                                  <tr className="bg-gray-50">
+                                    <td colSpan="4" className="py-2 px-3 text-right font-medium text-gray-700">Costo Total Receta:</td>
+                                    <td className="py-2 px-3 text-right font-bold text-gray-900">L{costoSubReceta.toFixed(2)}</td>
+                                  </tr>
+                                </tfoot>
+                              </table>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {/* Resumen total */}
+                      <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                        <p className="text-sm text-green-800">
+                          <span className="font-semibold">Costo Total Base ({base.nombre}):</span> L{calcularCostoBaseSimple(base).toFixed(2)} / porción
+                        </p>
+                        <p className="text-xs text-green-600 mt-1">
+                          Suma de: {base.subRecetas.map(sr => sr.nombre).join(' + ')}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Base simple con ingredientes directos */}
+                      <div className="grid grid-cols-3 gap-4 mb-4 pb-4 border-b border-gray-100">
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Peso Receta</label>
+                          <p className="text-sm font-medium text-gray-900">{base.pesoReceta}g</p>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Peso Porción</label>
+                          <p className="text-sm font-medium text-gray-900">{base.pesoPorcion}g</p>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Porciones por Receta</label>
+                          <p className="text-sm font-medium text-gray-900">{(base.pesoReceta / base.pesoPorcion).toFixed(1)}</p>
+                        </div>
+                      </div>
+
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Ingredientes</h4>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-gray-100">
+                              <th className="text-left py-2 font-medium text-gray-600">Ingrediente</th>
+                              <th className="text-right py-2 font-medium text-gray-600">Peso</th>
+                              <th className="text-right py-2 font-medium text-gray-600">Peso Compra</th>
+                              <th className="text-right py-2 font-medium text-gray-600">Precio Compra</th>
+                              <th className="text-right py-2 font-medium text-gray-600">Costo</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {base.ingredientes.map((ing) => {
+                              const costoIng = ing.pesoCompra > 0 ? (ing.pesoUsado / ing.pesoCompra) * ing.precioCompra : 0;
+                              return (
+                                <tr key={ing.id} className="border-b border-gray-50">
+                                  <td className="py-2 text-gray-900">{ing.nombre}</td>
+                                  <td className="py-2 text-right text-gray-600">{ing.pesoUsado}g</td>
+                                  <td className="py-2 text-right text-gray-600">{ing.pesoCompra}g</td>
+                                  <td className="py-2 text-right text-gray-600">L{ing.precioCompra.toFixed(2)}</td>
+                                  <td className="py-2 text-right font-medium text-gray-900">L{costoIng.toFixed(2)}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                        <p className="text-sm text-gray-600">
+                          <span className="font-medium">Costo total receta:</span> L{base.ingredientes.reduce((sum, ing) => {
+                            return sum + (ing.pesoCompra > 0 ? (ing.pesoUsado / ing.pesoCompra) * ing.precioCompra : 0);
+                          }, 0).toFixed(2)}
+                        </p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          <span className="font-medium">Costo por porción ({base.pesoPorcion}g):</span> L{calcularCostoBaseSimple(base).toFixed(2)}
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </>
+      )}
 
       {/* Nota informativa */}
+      {tieneAlgunaBase && (
       <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
         <p className="text-sm text-blue-800">
           <span className="font-semibold">¿Cómo usar las bases?</span> Al crear o editar una receta, podrás activar estas bases con un checkbox. 
           El costo de las bases activadas se sumará automáticamente al costo directo del plato.
         </p>
       </div>
+      )}
     </div>
   );
 }
@@ -3748,7 +4485,7 @@ function IngredientModal({ ingredient, ingredients, onClose, onSave }) {
 // ============================================
 // MÓDULO DE RECETAS
 // ============================================
-function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, configCostos, deliveryPorReceta, onToggleDelivery, isvPorReceta, onToggleISV, precioVentaPorReceta, onUpdatePrecioVenta, onUpdatePrecioCliente, calcularTotales, basesReceta, basesPorReceta, onToggleBaseReceta, calcularCostoPolloFrito, calcularCostoPolloFritoEnsalada, calcularCostoPapasFritas, empaques, empaquesPorReceta, onToggleEmpaque, calcularCostoEmpaques }) {
+function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, configCostos, deliveryPorReceta, onToggleDelivery, isvPorReceta, onToggleISV, precioVentaPorReceta, onUpdatePrecioVenta, onUpdatePrecioCliente, calcularTotales, basesReceta, basesPorReceta, onToggleBaseReceta, calcularCostoPolloFrito, calcularCostoPolloFritoEnsalada, calcularCostoPapasFritas, calcularCostoBaseSimple, calcularCostoBases, brand, empaques, empaquesPorReceta, onToggleEmpaque, calcularCostoEmpaques }) {
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [showNewRecipeModal, setShowNewRecipeModal] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState(null);
@@ -3799,20 +4536,10 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, config
     return 0;
   };
 
-  // Calcular costo de bases activadas para una receta
-  const calcularCostoBases = (recipeId) => {
-    const bases = basesPorReceta[recipeId] || {};
-    let costoBases = 0;
-    if (bases.polloFrito) costoBases += costoPolloFrito;
-    if (bases.polloFritoEnsalada) costoBases += costoPolloFritoEnsalada;
-    if (bases.papasFritas) costoBases += costoPapasFritas;
-    return costoBases;
-  };
-
-  // Verificar si tiene bases activadas
+  // Verificar si tiene bases activadas (cualquier marca)
   const tieneBasesActivadas = (recipeId) => {
     const bases = basesPorReceta[recipeId] || {};
-    return bases.polloFrito || bases.polloFritoEnsalada || bases.papasFritas;
+    return Object.values(bases).some(v => v === true);
   };
 
   // Calcular costo directo del plato (sub-recetas + bases, SIN empaques)
@@ -3856,6 +4583,8 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, config
         basesPorReceta={basesPorReceta[selectedRecipe.id] || {}}
         onToggleBaseReceta={(baseKey) => onToggleBaseReceta(selectedRecipe.id, baseKey)}
         calcularCostoBases={() => calcularCostoBases(selectedRecipe.id)}
+        calcularCostoBaseSimple={calcularCostoBaseSimple}
+        brand={brand}
         costoPolloFrito={costoPolloFrito}
         costoPapasFritas={costoPapasFritas}
         empaques={empaques}
@@ -4080,33 +4809,50 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, config
                         {/* Bases de receta */}
                         <div className="flex items-center gap-4 mb-3 pb-3 border-b border-gray-100 flex-wrap">
                           <span className="text-xs font-medium text-gray-500 uppercase">Bases:</span>
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={basesActivas.polloFrito || false}
-                              onChange={() => onToggleBaseReceta(recipe.id, 'polloFrito')}
-                              className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
-                            />
-                            <span className="text-sm text-gray-700">Pollo Frito <span className="text-gray-400">(L{costoPolloFrito.toFixed(2)})</span></span>
-                          </label>
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={basesActivas.polloFritoEnsalada || false}
-                              onChange={() => onToggleBaseReceta(recipe.id, 'polloFritoEnsalada')}
-                              className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
-                            />
-                            <span className="text-sm text-gray-700">Pollo Ensalada/Sandwich <span className="text-gray-400">(L{costoPolloFritoEnsalada.toFixed(2)})</span></span>
-                          </label>
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={basesActivas.papasFritas || false}
-                              onChange={() => onToggleBaseReceta(recipe.id, 'papasFritas')}
-                              className="w-4 h-4 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500"
-                            />
-                            <span className="text-sm text-gray-700">Papas Fritas <span className="text-gray-400">(L{costoPapasFritas.toFixed(2)})</span></span>
-                          </label>
+                          {/* Soul Chkn bases */}
+                          {brand?.id === '1' && (
+                            <>
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={basesActivas.polloFrito || false}
+                                  onChange={() => onToggleBaseReceta(recipe.id, 'polloFrito')}
+                                  className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                                />
+                                <span className="text-sm text-gray-700">Pollo Frito <span className="text-gray-400">(L{costoPolloFrito.toFixed(2)})</span></span>
+                              </label>
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={basesActivas.polloFritoEnsalada || false}
+                                  onChange={() => onToggleBaseReceta(recipe.id, 'polloFritoEnsalada')}
+                                  className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                                />
+                                <span className="text-sm text-gray-700">Pollo Ensalada/Sandwich <span className="text-gray-400">(L{costoPolloFritoEnsalada.toFixed(2)})</span></span>
+                              </label>
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={basesActivas.papasFritas || false}
+                                  onChange={() => onToggleBaseReceta(recipe.id, 'papasFritas')}
+                                  className="w-4 h-4 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500"
+                                />
+                                <span className="text-sm text-gray-700">Papas Fritas <span className="text-gray-400">(L{costoPapasFritas.toFixed(2)})</span></span>
+                              </label>
+                            </>
+                          )}
+                          {/* Green Memo bases (y otras marcas con bases simples) */}
+                          {brand?.id !== '1' && Object.entries(basesReceta || {}).filter(([k, v]) => v?.ingredientes || v?.subRecetas).map(([baseKey, base]) => (
+                            <label key={baseKey} className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={basesActivas[baseKey] || false}
+                                onChange={() => onToggleBaseReceta(recipe.id, baseKey)}
+                                className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                              />
+                              <span className="text-sm text-gray-700">{base.nombre} <span className="text-gray-400">(L{calcularCostoBaseSimple(base).toFixed(2)})</span></span>
+                            </label>
+                          ))}
                         </div>
 
                         {/* Empaques / Materiales */}
@@ -4251,7 +4997,7 @@ function NewRecipeModal({ onClose, onSave }) {
 // ============================================
 // DETALLE DE RECETA
 // ============================================
-function RecipeDetail({ recipe, ingredients, onBack, onUpdate, calcularCostoSubReceta, calcularCostoPorcion, calcularCostoDirecto, costoFijoPorPlato, configCostos, tieneDelivery, onToggleDelivery, tieneISV, onToggleISV, precioVenta, onUpdatePrecioVenta, onUpdatePrecioCliente, getFoodCostColor, basesReceta, basesPorReceta, onToggleBaseReceta, calcularCostoBases, costoPolloFrito, costoPapasFritas, empaques, empaquesPorReceta, onToggleEmpaque, calcularCostoEmpaques }) {
+function RecipeDetail({ recipe, ingredients, onBack, onUpdate, calcularCostoSubReceta, calcularCostoPorcion, calcularCostoDirecto, costoFijoPorPlato, configCostos, tieneDelivery, onToggleDelivery, tieneISV, onToggleISV, precioVenta, onUpdatePrecioVenta, onUpdatePrecioCliente, getFoodCostColor, basesReceta, basesPorReceta, onToggleBaseReceta, calcularCostoBases, calcularCostoBaseSimple, brand, costoPolloFrito, costoPapasFritas, empaques, empaquesPorReceta, onToggleEmpaque, calcularCostoEmpaques }) {
   const [showNewSubReceta, setShowNewSubReceta] = useState(false);
   const [editingSubReceta, setEditingSubReceta] = useState(null);
   const [expandedSubReceta, setExpandedSubReceta] = useState(null);
@@ -4318,7 +5064,8 @@ function RecipeDetail({ recipe, ingredients, onBack, onUpdate, calcularCostoSubR
   const costoDirecto = calcularCostoDirecto(recipe);
   const costoBases = calcularCostoBases ? calcularCostoBases() : 0;
   const costoEmpaquesTotal = calcularCostoEmpaques ? calcularCostoEmpaques() : 0;
-  const tieneBasesActivas = basesPorReceta?.polloFrito || basesPorReceta?.polloFritoEnsalada || basesPorReceta?.papasFritas;
+  // Detectar si hay bases activas (Soul Chkn o Green Memo)
+  const tieneBasesActivas = Object.values(basesPorReceta || {}).some(v => v === true);
   const tieneEmpaquesActivos = costoEmpaquesTotal > 0;
   const tieneExtras = tieneBasesActivas || tieneEmpaquesActivos;
   // Costo Total = Costo Directo + Empaques (SIN costo fijo)
