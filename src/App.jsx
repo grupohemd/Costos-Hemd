@@ -5379,13 +5379,28 @@ function SubRecetaModal({ subReceta, ingredients, onClose, onSave }) {
   const [ingredientesReceta, setIngredientesReceta] = useState(
     subReceta?.ingredientes?.map(ing => ({
       id: ing.id,
-      ingredienteId: ing.ingredienteId || null, // ID del banco
-      ingredienteNombre: ing.ingredienteNombre, // Nombre para compatibilidad
+      ingredienteId: ing.ingredienteId || null,
+      ingredienteNombre: ing.ingredienteNombre,
       peso: ing.peso
     })) || []
   );
   const [pesoReceta, setPesoReceta] = useState(subReceta?.pesoReceta || '');
   const [pesoPorcion, setPesoPorcion] = useState(subReceta?.pesoPorcion || '');
+
+  // Reinicializar estados cuando cambia la subReceta
+  useEffect(() => {
+    setNombre(subReceta?.nombre || '');
+    setIngredientesReceta(
+      subReceta?.ingredientes?.map(ing => ({
+        id: ing.id,
+        ingredienteId: ing.ingredienteId || null,
+        ingredienteNombre: ing.ingredienteNombre,
+        peso: ing.peso
+      })) || []
+    );
+    setPesoReceta(subReceta?.pesoReceta || '');
+    setPesoPorcion(subReceta?.pesoPorcion || '');
+  }, [subReceta]);
 
   // Helper: obtener datos del ingrediente del banco (por ID primero, luego por nombre)
   const getIngredientFromBank = (ingredienteId, ingredienteNombre) => {
