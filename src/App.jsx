@@ -3956,90 +3956,58 @@ function EmpaquesModule({ empaques, onUpdateEmpaques }) {
 // BANCO DE INGREDIENTES
 // ============================================
 function BancoIngredientes({ ingredients, onAdd, onDelete, onUpdate }) {
-  // ========== ESTADOS LOCALES ==========
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingIngredient, setEditingIngredient] = useState(null);
+  const [viewingIngredient, setViewingIngredient] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterGrupo, setFilterGrupo] = useState('');
-  const [filterPendientes, setFilterPendientes] = useState(false);
+  const [soloPendientes, setSoloPendientes] = useState(false);
 
-  // ========== DATOS DERIVADOS ==========
-  const grupos = [...new Set(ingredients.map(ing => ing.grupo))].filter(Boolean).sort();
-  const pendientesCount = ingredients.filter(ing => !ing.pesoCompra || !ing.precio).length;
-
-  // ========== FILTRADO ==========
-  // Filtrar por nombre (igual que en recetas)
-  const filteredIngredients = ingredients.filter(ing =>
-    ing.ingrediente.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Aplicar filtros adicionales
-  const calcularListaFiltrada = () => {
-    let resultado = filteredIngredients.slice();
-
-    // Filtro por grupo
-    if (filterGrupo !== '') {
-      resultado = resultado.filter((ing) => ing.grupo === filterGrupo);
+  // Contar pendientes
+  let totalPendientes = 0;
+  for (let i = 0; i < ingredients.length; i++) {
+    if (!ingredients[i].pesoCompra || !ingredients[i].precio) {
+      totalPendientes++;
     }
+  }
 
+  // Filtrar SOLO por la columna "Nombre Ingrediente" (campo: ingrediente)
+  const listaVisible = [];
+  const busqueda = searchTerm.trim().toLowerCase();
+  
+  for (let i = 0; i < ingredients.length; i++) {
+    const ing = ingredients[i];
+    if (!ing || !ing.ingrediente) continue;
+    
+    const nombreIngrediente = ing.ingrediente.toLowerCase();
+    const esPendiente = !ing.pesoCompra || !ing.precio;
+    
+    // Filtro por búsqueda
+    if (busqueda !== '' && !nombreIngrediente.includes(busqueda)) {
+      continue;
+    }
+    
     // Filtro por pendientes
-    if (filterPendientes === true) {
-      resultado = resultado.filter((ing) => !ing.pesoCompra || !ing.precio);
+    if (soloPendientes && !esPendiente) {
+      continue;
     }
+    
+    listaVisible.push(ing);
+  }
 
-    return resultado;
-  };
-
-  const listaFiltrada = calcularListaFiltrada();
-
-  // ========== HANDLERS ==========
-  const handleDelete = (id) => {
-    onDelete(id);
-    setDeleteConfirm(null);
-  };
-
-  // ========== RENDER ==========
   return (
-    <div className="max-w-7xl mx-auto">
-      {/* Header con filtros */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-4">
-        <select
-          value={filterGrupo}
-          onChange={(e) => setFilterGrupo(e.target.value)}
-          className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400 bg-white"
-        >
-          <option value="">Todos los grupos</option>
-          {grupos.map(grupo => (
-            <option key={grupo} value={grupo}>{grupo}</option>
-          ))}
-        </select>
-        {pendientesCount > 0 && (
-          <button
-            type="button"
-            onClick={() => setFilterPendientes(!filterPendientes)}
-            className={`flex items-center gap-2 px-4 py-2.5 border rounded-lg text-sm font-medium transition-colors ${
-              filterPendientes 
-                ? 'bg-red-50 border-red-200 text-red-700' 
-                : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            Pendientes ({pendientesCount})
-          </button>
-        )}
-        <div className="flex-1"></div>
-        <button
-          type="button"
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
-        >
+    <div className="max-w-4xl mx-auto">
+      {/* HEADER */}
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900">Ingredientes</h2>
+          <p className="text-sm text-gray-500">{listaVisible.length} de {ingredients.length} ingredientes</p>
+        </div>
+        <button onClick={() => setShowAddModal(true)} className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M12 5v14M5 12h14" />
           </svg>
-          Agregar ingrediente
+          Agregar
         </button>
       </div>
 
@@ -4050,174 +4018,140 @@ function BancoIngredientes({ ingredients, onAdd, onDelete, onUpdate }) {
         </svg>
         <input
           type="text"
-          placeholder="Buscar ingrediente..."
+          placeholder="Buscar por nombre de ingrediente..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
         />
       </div>
 
-      {/* Contador */}
-      <p className="text-sm text-gray-500 mb-4">
-        {listaFiltrada.length} de {ingredients.length} ingredientes
-        {filterPendientes && ' (mostrando solo pendientes)'}
-        {pendientesCount > 0 && !filterPendientes && (
-          <span className="text-red-500 ml-2">• {pendientesCount} pendientes</span>
+      {/* Botón Pendientes */}
+      <div className="mb-4 flex items-center gap-3">
+        {totalPendientes > 0 && (
+          <button
+            onClick={() => setSoloPendientes(!soloPendientes)}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
+              soloPendientes 
+                ? 'bg-red-50 text-red-700 border-red-300' 
+                : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            Pendientes ({totalPendientes})
+          </button>
         )}
-      </p>
+        
+        {(searchTerm || soloPendientes) && (
+          <button 
+            onClick={() => { setSearchTerm(''); setSoloPendientes(false); }} 
+            className="px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
+          >
+            Limpiar filtros
+          </button>
+        )}
+      </div>
 
-      {/* Tabla */}
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Medida</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Ingrediente</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-700">Peso compra</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-700">Precio</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-700">Merma</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Grupo</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Proveedor</th>
-                <th className="text-center px-4 py-3 font-medium text-gray-700 w-24">Acciones</th>
+      {/* TABLA */}
+      <div key={`tabla-${busqueda}-${listaVisible.length}-${soloPendientes}`} className="bg-white border rounded-xl overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50 border-b">
+            <tr>
+              <th className="text-left px-4 py-3 font-medium text-gray-600">Nombre Ingrediente</th>
+              <th className="text-right px-4 py-3 font-medium text-gray-600 w-28">Peso</th>
+              <th className="text-right px-4 py-3 font-medium text-gray-600 w-28">Precio</th>
+              <th className="text-center px-4 py-3 font-medium text-gray-600 w-36">Acciones</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {listaVisible.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                  {searchTerm || soloPendientes ? 'No se encontraron ingredientes' : 'No hay ingredientes'}
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {listaFiltrada.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
-                    {searchTerm ? 'No se encontraron ingredientes' : 'No hay ingredientes'}
-                  </td>
-                </tr>
-              )}
-              {listaFiltrada.length > 0 && listaFiltrada.map((ing) => {
-                const hasPendingFields = !ing.pesoCompra || !ing.precio;
-                const isPendienteValidacion = ing.pendienteValidacion === true;
+            ) : (
+              listaVisible.map((ing, index) => {
+                const isPending = !ing.pesoCompra || !ing.precio;
                 return (
-                  <tr 
-                    key={ing.id} 
-                    className={`hover:bg-gray-50 transition-colors ${isPendienteValidacion ? 'bg-yellow-50/50' : hasPendingFields ? 'bg-red-50/30' : ''}`}
-                  >
-                    <td className="px-4 py-3 text-gray-600">{ing.medida}</td>
-                    <td className="px-4 py-3 font-medium text-gray-900">
-                      {ing.ingrediente}
-                      {isPendienteValidacion && (
-                        <span className="ml-2 inline-block px-1.5 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs font-medium">
-                          Por validar
-                        </span>
-                      )}
-                      {hasPendingFields && !isPendienteValidacion && (
-                        <span className="ml-2 inline-block px-1.5 py-0.5 bg-red-100 text-red-600 rounded text-xs font-medium">
-                          Pendiente
-                        </span>
-                      )}
+                  <tr key={`${ing.id}-${index}`} className={isPending ? 'bg-red-50/50' : 'hover:bg-gray-50'}>
+                    <td className="px-4 py-3">
+                      <span className="font-medium text-gray-900">{ing.ingrediente}</span>
+                      {isPending && <span className="ml-2 px-1.5 py-0.5 bg-red-100 text-red-600 rounded text-xs">Pendiente</span>}
                     </td>
-                    <td className={`px-4 py-3 text-right ${!ing.pesoCompra ? 'text-red-500 font-medium' : 'text-gray-600'}`}>
-                      {ing.pesoCompra || 'Sin datos'}
+                    <td className={`px-4 py-3 text-right ${!ing.pesoCompra ? 'text-red-500' : 'text-gray-600'}`}>
+                      {ing.pesoCompra ? `${ing.pesoCompra}${ing.medida === 'gr' ? 'g' : ''}` : '—'}
                     </td>
-                    <td className={`px-4 py-3 text-right ${!ing.precio ? 'text-red-500 font-medium' : 'text-gray-900'}`}>
-                      {ing.precio ? `L${ing.precio.toFixed(2)}` : 'Sin datos'}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {ing.merma > 0 ? (
-                        <span className="inline-block px-2 py-1 bg-amber-50 text-amber-700 rounded text-xs font-medium">
-                          {ing.merma}%
-                        </span>
-                      ) : (
-                        <span className="text-gray-400 text-sm">0%</span>
-                      )}
+                    <td className={`px-4 py-3 text-right ${!ing.precio ? 'text-red-500' : 'text-gray-900 font-medium'}`}>
+                      {ing.precio ? `L${Number(ing.precio).toFixed(2)}` : '—'}
                     </td>
                     <td className="px-4 py-3">
-                      {ing.grupo ? (
-                        <span className="inline-block px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
-                          {ing.grupo}
-                        </span>
-                      ) : (
-                        <span className="text-gray-400 text-sm">-</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{ing.proveedor || '-'}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => setEditingIngredient(ing)}
-                          className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                          title="Editar"
+                      <div className="flex justify-center gap-2">
+                        <button 
+                          onClick={() => setViewingIngredient(ing)} 
+                          className="px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded border border-blue-200"
                         >
-                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                          </svg>
+                          Detalles
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeleteConfirm(ing)}
-                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                          title="Eliminar"
+                        <button 
+                          onClick={() => setEditingIngredient(ing)} 
+                          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded"
                         >
-                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
+                          ✎
+                        </button>
+                        <button 
+                          onClick={() => setDeleteConfirm(ing)} 
+                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                        >
+                          🗑
                         </button>
                       </div>
                     </td>
                   </tr>
                 );
-              })}
-            </tbody>
-          </table>
-        </div>
+              })
+            )}
+          </tbody>
+        </table>
       </div>
 
-      {/* Modal agregar ingrediente */}
+      {/* MODAL VER DETALLES */}
+      {viewingIngredient && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setViewingIngredient(null)}>
+          <div className="bg-white rounded-xl p-6 max-w-md w-full" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold mb-4">{viewingIngredient.ingrediente}</h3>
+            <div className="space-y-2 text-sm">
+              <p><span className="text-gray-500">Medida:</span> {viewingIngredient.medida}</p>
+              <p><span className="text-gray-500">Peso compra:</span> {viewingIngredient.pesoCompra || '—'}</p>
+              <p><span className="text-gray-500">Precio:</span> {viewingIngredient.precio ? `L${viewingIngredient.precio}` : '—'}</p>
+              <p><span className="text-gray-500">Merma:</span> {viewingIngredient.merma || 0}%</p>
+              <p><span className="text-gray-500">Grupo:</span> {viewingIngredient.grupo || '—'}</p>
+              <p><span className="text-gray-500">Marca:</span> {viewingIngredient.marca || '—'}</p>
+              <p><span className="text-gray-500">Proveedor:</span> {viewingIngredient.proveedor || '—'}</p>
+            </div>
+            <button onClick={() => setViewingIngredient(null)} className="mt-4 w-full py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODALS */}
       {showAddModal && (
-        <IngredientModal
-          ingredients={ingredients}
-          onClose={() => setShowAddModal(false)}
-          onSave={(ingredient) => {
-            onAdd(ingredient);
-            setShowAddModal(false);
-          }}
-        />
+        <IngredientModal ingredients={ingredients} onClose={() => setShowAddModal(false)} onSave={(ing) => { onAdd(ing); setShowAddModal(false); }} />
       )}
-
-      {/* Modal editar ingrediente */}
       {editingIngredient && (
-        <IngredientModal
-          ingredient={editingIngredient}
-          ingredients={ingredients}
-          onClose={() => setEditingIngredient(null)}
-          onSave={(ingredient) => {
-            onUpdate(ingredient);
-            setEditingIngredient(null);
-          }}
-        />
+        <IngredientModal ingredient={editingIngredient} ingredients={ingredients} onClose={() => setEditingIngredient(null)} onSave={(ing) => { onUpdate(ing); setEditingIngredient(null); }} />
       )}
-
-      {/* Modal confirmar eliminación */}
       {deleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-5 z-50" onClick={() => setDeleteConfirm(null)}>
-          <div className="w-full max-w-sm bg-white rounded-xl p-6" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Eliminar ingrediente</h3>
-            <p className="text-gray-600 mb-6">
-              ¿Estás seguro que quieres eliminar <strong>"{deleteConfirm.ingrediente}"</strong>?
-            </p>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setDeleteConfirm(null)}>
+          <div className="bg-white rounded-xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold mb-2">¿Eliminar?</h3>
+            <p className="text-gray-600 mb-4">Se eliminará "{deleteConfirm.ingrediente}"</p>
             <div className="flex gap-3 justify-end">
-              <button
-                type="button"
-                onClick={() => setDeleteConfirm(null)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                No
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDelete(deleteConfirm.id)}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
-              >
-                Sí
-              </button>
+              <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 border rounded-lg">Cancelar</button>
+              <button onClick={() => { onDelete(deleteConfirm.id); setDeleteConfirm(null); setSearchTerm(''); setSoloPendientes(false); }} className="px-4 py-2 bg-red-600 text-white rounded-lg">Eliminar</button>
             </div>
           </div>
         </div>
@@ -4695,6 +4629,10 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, config
                     <div className="flex-1">
                       <h3 className="font-medium text-gray-900">{recipe.nombre}</h3>
                       <p className="text-sm text-gray-500">{recipe.subRecetas.length} sub-receta{recipe.subRecetas.length !== 1 ? 's' : ''}</p>
+                    </div>
+                    <div className="text-right mr-2">
+                      <p className="text-xs text-gray-500">Costo Total</p>
+                      <p className="font-semibold text-gray-900">L{costoTotal.toFixed(2)}</p>
                     </div>
                     <svg className="w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M9 18l6-6-6-6" />
