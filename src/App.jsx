@@ -1691,11 +1691,50 @@ export default function App() {
   };
 
   const handleUpdateIngredient = (updatedIngredient) => {
+    // Obtener el ingrediente anterior para ver si cambió el nombre
+    const oldIngredient = ingredients.find(ing => ing.id === updatedIngredient.id);
+    const oldName = oldIngredient?.ingrediente || '';
+    const newName = updatedIngredient.ingrediente;
+    const ingredientId = updatedIngredient.id;
+    
+    // Actualizar el ingrediente en el banco
     setIngredients(ingredients.map(ing => 
       ing.id === updatedIngredient.id 
         ? { ...updatedIngredient, fechaActualizacion: new Date().toLocaleDateString('es-HN') }
         : ing
     ));
+    
+    // Actualizar todas las sub-recetas que usan este ingrediente (en TODAS las marcas)
+    setRecetasPorMarca(prev => {
+      const updated = { ...prev };
+      
+      Object.keys(updated).forEach(brandId => {
+        updated[brandId] = updated[brandId].map(receta => ({
+          ...receta,
+          subRecetas: receta.subRecetas.map(subReceta => ({
+            ...subReceta,
+            ingredientes: subReceta.ingredientes.map(ing => {
+              // Verificar si este ingrediente coincide (por ID o por nombre anterior)
+              const matchById = ing.ingredienteId === ingredientId;
+              const matchByName = !ing.ingredienteId && ing.ingredienteNombre && 
+                ing.ingredienteNombre.toLowerCase() === oldName.toLowerCase();
+              
+              if (matchById || matchByName) {
+                // Actualizar con el nuevo nombre y asegurar que tenga el ID
+                return {
+                  ...ing,
+                  ingredienteId: ingredientId,
+                  ingredienteNombre: newName
+                };
+              }
+              return ing;
+            })
+          }))
+        }));
+      });
+      
+      return updated;
+    });
   };
 
   // Funciones para manejar recetas (POR MARCA)
@@ -4438,17 +4477,40 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, config
   const costoPolloFritoEnsalada = calcularCostoPolloFritoEnsalada();
   const costoPapasFritas = calcularCostoPapasFritas();
 
-  // Helper: obtener datos de ingrediente del banco por nombre
-  const getIngredientFromBank = (ingredienteNombre) => {
-    return ingredients.find(i => 
-      i.ingrediente.toLowerCase() === ingredienteNombre.toLowerCase()
-    );
+  // Helper: obtener datos de ingrediente del banco (por ID primero, luego por nombre)
+  const getIngredientFromBank = (ingredienteId, ingredienteNombre) => {
+    // Primero buscar por ID
+    if (ingredienteId) {
+      const byId = ingredients.find(i => i.id === ingredienteId);
+      if (byId) return byId;
+    }
+    // Fallback: buscar por nombre (para datos antiguos)
+    if (ingredienteNombre) {
+      return ingredients.find(i => 
+        i.ingrediente.toLowerCase() === ingredienteNombre.toLowerCase()
+      );
+    }
+    return null;
+  };
+
+  // Verificar si una sub-receta tiene ingredientes incompletos
+  const subRecetaTieneIncompletos = (subReceta) => {
+    return subReceta.ingredientes.some(ing => {
+      const bancoIng = getIngredientFromBank(ing.ingredienteId, ing.ingredienteNombre);
+      // Incompleto si: no está en banco, o no tiene peso, o no tiene precio
+      return !bancoIng || !bancoIng.pesoCompra || !bancoIng.precio;
+    });
+  };
+
+  // Verificar si una receta tiene alguna sub-receta con ingredientes incompletos
+  const recetaTieneIncompletos = (recipe) => {
+    return recipe.subRecetas.some(sr => subRecetaTieneIncompletos(sr));
   };
 
   // Calcular costo total de una sub-receta (siempre usa valores del banco)
   const calcularCostoSubReceta = (subReceta) => {
     const costoTotal = subReceta.ingredientes.reduce((sum, ing) => {
-      const bancoIng = getIngredientFromBank(ing.ingredienteNombre);
+      const bancoIng = getIngredientFromBank(ing.ingredienteId, ing.ingredienteNombre);
       if (bancoIng && bancoIng.pesoCompra && bancoIng.precio && ing.peso) {
         const merma = parseFloat(bancoIng.merma) || 0;
         const pesoAprovechable = bancoIng.pesoCompra * (1 - merma / 100);
@@ -4525,6 +4587,7 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, config
         empaquesPorReceta={empaquesPorReceta[selectedRecipe.id] || {}}
         onToggleEmpaque={(empaqueId) => onToggleEmpaque(selectedRecipe.id, empaqueId)}
         calcularCostoEmpaques={() => calcularCostoEmpaques(selectedRecipe.id)}
+        subRecetaTieneIncompletos={subRecetaTieneIncompletos}
       />
     );
   }
@@ -4627,7 +4690,18 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, config
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-medium text-gray-900">{recipe.nombre}</h3>
+                      <h3 className="font-medium text-gray-900 flex items-center gap-2">
+                        {recipe.nombre}
+                        {recetaTieneIncompletos(recipe) && (
+                          <span className="text-red-500" title="Tiene ingredientes incompletos">
+                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                              <line x1="12" y1="9" x2="12" y2="13" />
+                              <line x1="12" y1="17" x2="12.01" y2="17" />
+                            </svg>
+                          </span>
+                        )}
+                      </h3>
                       <p className="text-sm text-gray-500">{recipe.subRecetas.length} sub-receta{recipe.subRecetas.length !== 1 ? 's' : ''}</p>
                     </div>
                     <div className="text-right mr-2">
@@ -4935,7 +5009,7 @@ function NewRecipeModal({ onClose, onSave }) {
 // ============================================
 // DETALLE DE RECETA
 // ============================================
-function RecipeDetail({ recipe, ingredients, onBack, onUpdate, calcularCostoSubReceta, calcularCostoPorcion, calcularCostoDirecto, costoFijoPorPlato, configCostos, tieneDelivery, onToggleDelivery, tieneISV, onToggleISV, precioVenta, onUpdatePrecioVenta, onUpdatePrecioCliente, getFoodCostColor, basesReceta, basesPorReceta, onToggleBaseReceta, calcularCostoBases, calcularCostoBaseSimple, brand, costoPolloFrito, costoPapasFritas, empaques, empaquesPorReceta, onToggleEmpaque, calcularCostoEmpaques }) {
+function RecipeDetail({ recipe, ingredients, onBack, onUpdate, calcularCostoSubReceta, calcularCostoPorcion, calcularCostoDirecto, costoFijoPorPlato, configCostos, tieneDelivery, onToggleDelivery, tieneISV, onToggleISV, precioVenta, onUpdatePrecioVenta, onUpdatePrecioCliente, getFoodCostColor, basesReceta, basesPorReceta, onToggleBaseReceta, calcularCostoBases, calcularCostoBaseSimple, brand, costoPolloFrito, costoPapasFritas, empaques, empaquesPorReceta, onToggleEmpaque, calcularCostoEmpaques, subRecetaTieneIncompletos }) {
   const [showNewSubReceta, setShowNewSubReceta] = useState(false);
   const [editingSubReceta, setEditingSubReceta] = useState(null);
   const [expandedSubReceta, setExpandedSubReceta] = useState(null);
@@ -5097,7 +5171,18 @@ function RecipeDetail({ recipe, ingredients, onBack, onUpdate, calcularCostoSubR
                   <path d="M9 18l6-6-6-6" />
                 </svg>
                 <div className="flex-1">
-                  <h3 className="font-medium text-gray-900">{subReceta.nombre}</h3>
+                  <h3 className="font-medium text-gray-900 flex items-center gap-2">
+                    {subReceta.nombre}
+                    {subRecetaTieneIncompletos(subReceta) && (
+                      <span className="text-red-500" title="Tiene ingredientes incompletos">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                          <line x1="12" y1="9" x2="12" y2="13" />
+                          <line x1="12" y1="17" x2="12.01" y2="17" />
+                        </svg>
+                      </span>
+                    )}
+                  </h3>
                   <p className="text-xs text-gray-500">{subReceta.ingredientes.length} ingredientes</p>
                 </div>
                 <div className="text-right mr-4">
@@ -5294,23 +5379,40 @@ function SubRecetaModal({ subReceta, ingredients, onClose, onSave }) {
   const [ingredientesReceta, setIngredientesReceta] = useState(
     subReceta?.ingredientes?.map(ing => ({
       id: ing.id,
-      ingredienteNombre: ing.ingredienteNombre,
+      ingredienteId: ing.ingredienteId || null, // ID del banco
+      ingredienteNombre: ing.ingredienteNombre, // Nombre para compatibilidad
       peso: ing.peso
     })) || []
   );
   const [pesoReceta, setPesoReceta] = useState(subReceta?.pesoReceta || '');
   const [pesoPorcion, setPesoPorcion] = useState(subReceta?.pesoPorcion || '');
 
-  // Helper: obtener datos del ingrediente del banco
-  const getIngredientFromBank = (ingredienteNombre) => {
-    return ingredients.find(i => 
-      i.ingrediente.toLowerCase() === ingredienteNombre.toLowerCase()
-    );
+  // Helper: obtener datos del ingrediente del banco (por ID primero, luego por nombre)
+  const getIngredientFromBank = (ingredienteId, ingredienteNombre) => {
+    // Primero buscar por ID
+    if (ingredienteId) {
+      const byId = ingredients.find(i => i.id === ingredienteId);
+      if (byId) return byId;
+    }
+    // Fallback: buscar por nombre (para datos antiguos)
+    if (ingredienteNombre) {
+      return ingredients.find(i => 
+        i.ingrediente.toLowerCase() === ingredienteNombre.toLowerCase()
+      );
+    }
+    return null;
+  };
+
+  // Obtener nombre actual del ingrediente (desde el banco)
+  const getNombreActual = (ing) => {
+    const bancoIng = getIngredientFromBank(ing.ingredienteId, ing.ingredienteNombre);
+    return bancoIng ? bancoIng.ingrediente : ing.ingredienteNombre;
   };
 
   const handleAddIngrediente = () => {
     setIngredientesReceta([...ingredientesReceta, {
       id: 'i' + Date.now(),
+      ingredienteId: null,
       ingredienteNombre: '',
       peso: ''
     }]);
@@ -5322,9 +5424,11 @@ function SubRecetaModal({ subReceta, ingredients, onClose, onSave }) {
     setIngredientesReceta(updated);
   };
 
-  const handleSelectIngrediente = (index, ingredienteNombre) => {
+  const handleSelectIngrediente = (index, selectedIngredient) => {
     const updated = [...ingredientesReceta];
-    updated[index].ingredienteNombre = ingredienteNombre;
+    // Guardar tanto el ID como el nombre
+    updated[index].ingredienteId = selectedIngredient.id;
+    updated[index].ingredienteNombre = selectedIngredient.ingrediente;
     setIngredientesReceta(updated);
   };
 
@@ -5334,7 +5438,7 @@ function SubRecetaModal({ subReceta, ingredients, onClose, onSave }) {
 
   // Calcular costo usando valores del banco
   const calcularCostoIngrediente = (ing) => {
-    const bancoIng = getIngredientFromBank(ing.ingredienteNombre);
+    const bancoIng = getIngredientFromBank(ing.ingredienteId, ing.ingredienteNombre);
     if (bancoIng && bancoIng.pesoCompra && bancoIng.precio && ing.peso) {
       const merma = parseFloat(bancoIng.merma) || 0;
       const pesoAprovechable = parseFloat(bancoIng.pesoCompra) * (1 - merma / 100);
@@ -5356,11 +5460,15 @@ function SubRecetaModal({ subReceta, ingredients, onClose, onSave }) {
       onSave({
         id: subReceta?.id,
         nombre: nombre.trim(),
-        ingredientes: ingredientesReceta.map(ing => ({
-          id: ing.id,
-          ingredienteNombre: ing.ingredienteNombre,
-          peso: parseFloat(ing.peso) || 0
-        })),
+        ingredientes: ingredientesReceta.map(ing => {
+          const bancoIng = getIngredientFromBank(ing.ingredienteId, ing.ingredienteNombre);
+          return {
+            id: ing.id,
+            ingredienteId: ing.ingredienteId || (bancoIng ? bancoIng.id : null),
+            ingredienteNombre: bancoIng ? bancoIng.ingrediente : ing.ingredienteNombre,
+            peso: parseFloat(ing.peso) || 0
+          };
+        }),
         pesoReceta: parseFloat(pesoReceta) || 0,
         pesoPorcion: parseFloat(pesoPorcion) || 0
       });
@@ -5431,16 +5539,17 @@ function SubRecetaModal({ subReceta, ingredients, onClose, onSave }) {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {ingredientesReceta.map((ing, index) => {
-                    const bancoIng = getIngredientFromBank(ing.ingredienteNombre);
-                    const noEncontrado = ing.ingredienteNombre && !bancoIng;
+                    const bancoIng = getIngredientFromBank(ing.ingredienteId, ing.ingredienteNombre);
+                    const nombreMostrar = bancoIng ? bancoIng.ingrediente : ing.ingredienteNombre;
+                    const noEncontrado = (ing.ingredienteNombre || ing.ingredienteId) && !bancoIng;
                     return (
                       <tr key={ing.id} className={noEncontrado ? 'bg-red-50' : ''}>
                         <td className="px-3 py-2">
                           <IngredienteAutocomplete
-                            value={ing.ingredienteNombre}
+                            value={nombreMostrar}
                             ingredients={ingredients}
                             onChange={(value) => handleUpdateIngrediente(index, 'ingredienteNombre', value)}
-                            onSelect={(value) => handleSelectIngrediente(index, value)}
+                            onSelect={(selectedIng) => handleSelectIngrediente(index, selectedIng)}
                           />
                           {noEncontrado && (
                             <p className="text-xs text-red-600 mt-1">No encontrado en banco</p>
@@ -5581,7 +5690,8 @@ function IngredienteAutocomplete({ value, ingredients, onChange, onSelect }) {
   };
 
   const handleSelect = (ingrediente) => {
-    onSelect(ingrediente.ingrediente);
+    // Pasar el objeto completo del ingrediente (con id, nombre, etc)
+    onSelect(ingrediente);
     setShowSuggestions(false);
   };
 
