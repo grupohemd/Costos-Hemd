@@ -4768,13 +4768,85 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, onUpda
                   </div>
                 </div>
 
-                {/* Desplegable Resumen de costos y PVP */}
-                <div className="px-5 pb-5 pt-0">
+                {/* Costos siempre visibles */}
+                <div className="px-5 pb-3 pt-0">
+                  {/* Costos principales */}
+                  <div className="grid grid-cols-3 gap-3 text-sm mb-3">
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-gray-500 text-xs mb-1">
+                        Costo Directo {tieneBases ? '(+bases)' : ''}
+                      </p>
+                      <p className="font-semibold text-gray-900">L{costoDirecto.toFixed(2)}</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-gray-500 text-xs mb-1">Costo Fijo Prorrateado</p>
+                      <p className="font-semibold text-gray-900">L{costoFijoPorPlato.toFixed(2)}</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-gray-500 text-xs mb-1">
+                        Costo Total {tieneEmpaques ? '(+emp)' : ''}
+                      </p>
+                      <p className="font-semibold text-gray-900">L{costoTotal.toFixed(2)}</p>
+                    </div>
+                  </div>
+
+                  {/* Precio de venta e ISV */}
+                  <div className="grid grid-cols-5 gap-3 text-sm p-4 bg-gray-50 rounded-lg mb-3">
+                    <div className="bg-white rounded-lg p-3 border border-gray-200">
+                      <p className="text-gray-500 text-xs mb-1">Precio Venta</p>
+                      <div className="flex items-baseline">
+                        <span className="text-gray-400 text-sm mr-0.5">L</span>
+                        <input
+                          type="number"
+                          value={precioVenta || ''}
+                          onChange={(e) => onUpdatePrecioVenta(recipe.id, e.target.value)}
+                          className="w-full bg-transparent font-semibold text-gray-900 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-lg p-3 border border-gray-200">
+                      <p className="text-gray-500 text-xs mb-1">ISV ({configCostos.porcentajeISV}%)</p>
+                      <p className={`font-semibold ${tieneISV ? 'text-gray-900' : 'text-gray-400'}`}>
+                        L{montoISV.toFixed(2)}
+                      </p>
+                    </div>
+                    <div className={`rounded-lg p-3 border ${tieneDelivery ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200'}`}>
+                      <p className={`text-xs mb-1 ${tieneDelivery ? 'text-blue-600' : 'text-gray-500'}`}>
+                        PVP {tieneDelivery ? `(+${configCostos.porcentajeDelivery}%)` : ''}
+                      </p>
+                      <div className="flex items-baseline">
+                        <span className={`text-sm mr-0.5 ${tieneDelivery ? 'text-blue-400' : 'text-gray-400'}`}>L</span>
+                        <input
+                          type="number"
+                          defaultValue={precioCliente > 0 ? precioCliente.toFixed(2) : ''}
+                          key={`pvp-${recipe.id}-${tieneDelivery}-${tieneISV}-${precioVenta}`}
+                          onBlur={(e) => onUpdatePrecioCliente(recipe.id, e.target.value)}
+                          className={`w-full bg-transparent font-semibold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${tieneDelivery ? 'text-blue-700' : 'text-gray-900'}`}
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+                    <div className={`rounded-lg p-3 border ${precioVenta > 0 ? foodCostColors.bg + ' ' + foodCostColors.border : 'bg-white border-gray-200'}`}>
+                      <p className={`text-xs mb-1 ${precioVenta > 0 ? foodCostColors.text : 'text-gray-500'}`}>Food Cost</p>
+                      <p className={`font-semibold ${precioVenta > 0 ? foodCostColors.text : 'text-gray-400'}`}>
+                        {precioVenta > 0 ? `${foodCost.toFixed(1)}%` : '-'}
+                      </p>
+                    </div>
+                    <div className="bg-white rounded-lg p-3 border border-gray-200">
+                      <p className="text-gray-500 text-xs mb-1">Margen Real</p>
+                      <p className={`font-semibold ${margenReal >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {precioVenta > 0 ? `L${margenReal.toFixed(2)}` : '-'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Desplegable Componentes adicionales */}
                   <button
                     onClick={() => setExpandedCostos(prev => ({ ...prev, [recipe.id]: !prev[recipe.id] }))}
-                    className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors mb-2"
+                    className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
                   >
-                    <span className="font-medium text-gray-700">Resumen de costos y PVP</span>
+                    <span className="font-medium text-gray-700">Componentes adicionales</span>
                     <svg
                       className={`w-5 h-5 text-gray-500 transition-transform ${expandedCostos[recipe.id] ? 'rotate-180' : ''}`}
                       viewBox="0 0 24 24"
@@ -4787,171 +4859,97 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, onUpda
                   </button>
                   
                   {expandedCostos[recipe.id] && (
-                    <div className="mt-3 space-y-4">
-                      {/* Costos principales */}
-                      <div className="grid grid-cols-3 gap-3 text-sm">
-                        <div className={`rounded-lg p-3 ${tieneBases ? 'bg-amber-50' : 'bg-gray-50'}`}>
-                          <p className={`text-xs mb-1 ${tieneBases ? 'text-amber-600' : 'text-gray-500'}`}>
-                            Costo Directo {tieneBases ? '(+bases)' : ''}
-                          </p>
-                          <p className={`font-semibold ${tieneBases ? 'text-amber-700' : 'text-gray-900'}`}>L{costoDirecto.toFixed(2)}</p>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-3">
-                          <p className="text-gray-500 text-xs mb-1">Costo Fijo Prorrateado</p>
-                          <p className="font-semibold text-gray-900">L{costoFijoPorPlato.toFixed(2)}</p>
-                        </div>
-                        <div className={`rounded-lg p-3 ${tieneEmpaques ? 'bg-purple-50' : 'bg-blue-50'}`}>
-                          <p className={`text-xs mb-1 ${tieneEmpaques ? 'text-purple-600' : 'text-blue-600'}`}>
-                            Costo Total {tieneEmpaques ? '(+emp)' : ''}
-                          </p>
-                          <p className={`font-semibold ${tieneEmpaques ? 'text-purple-700' : 'text-blue-700'}`}>L{costoTotal.toFixed(2)}</p>
-                        </div>
-                      </div>
-
-                      {/* Precio de venta e ISV */}
-                      <div className="grid grid-cols-5 gap-3 text-sm p-4 bg-gray-50 rounded-lg">
-                        <div className="bg-white rounded-lg p-3 border border-gray-200">
-                          <p className="text-gray-500 text-xs mb-1">Precio Venta</p>
-                          <div className="flex items-baseline">
-                            <span className="text-gray-400 text-sm mr-0.5">L</span>
-                            <input
-                              type="number"
-                              value={precioVenta || ''}
-                              onChange={(e) => onUpdatePrecioVenta(recipe.id, e.target.value)}
-                              className="w-full bg-transparent font-semibold text-gray-900 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                              placeholder="0.00"
-                            />
-                          </div>
-                        </div>
-                        <div className="bg-white rounded-lg p-3 border border-gray-200">
-                          <p className="text-gray-500 text-xs mb-1">ISV ({configCostos.porcentajeISV}%)</p>
-                          <p className={`font-semibold ${tieneISV ? 'text-gray-900' : 'text-gray-400'}`}>
-                            L{montoISV.toFixed(2)}
-                          </p>
-                        </div>
-                        <div className={`rounded-lg p-3 border ${tieneDelivery ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200'}`}>
-                          <p className={`text-xs mb-1 ${tieneDelivery ? 'text-blue-600' : 'text-gray-500'}`}>
-                            PVP {tieneDelivery ? `(+${configCostos.porcentajeDelivery}%)` : ''}
-                          </p>
-                          <div className="flex items-baseline">
-                            <span className={`text-sm mr-0.5 ${tieneDelivery ? 'text-blue-400' : 'text-gray-400'}`}>L</span>
-                            <input
-                              type="number"
-                              defaultValue={precioCliente > 0 ? precioCliente.toFixed(2) : ''}
-                              key={`pvp-${recipe.id}-${tieneDelivery}-${tieneISV}-${precioVenta}`}
-                              onBlur={(e) => onUpdatePrecioCliente(recipe.id, e.target.value)}
-                              className={`w-full bg-transparent font-semibold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${tieneDelivery ? 'text-blue-700' : 'text-gray-900'}`}
-                              placeholder="0.00"
-                            />
-                          </div>
-                        </div>
-                        <div className={`rounded-lg p-3 border ${precioVenta > 0 ? foodCostColors.bg + ' ' + foodCostColors.border : 'bg-white border-gray-200'}`}>
-                          <p className={`text-xs mb-1 ${precioVenta > 0 ? foodCostColors.text : 'text-gray-500'}`}>Food Cost</p>
-                          <p className={`font-semibold ${precioVenta > 0 ? foodCostColors.text : 'text-gray-400'}`}>
-                            {precioVenta > 0 ? `${foodCost.toFixed(1)}%` : '-'}
-                          </p>
-                        </div>
-                        <div className="bg-white rounded-lg p-3 border border-gray-200">
-                          <p className="text-gray-500 text-xs mb-1">Margen Real</p>
-                          <p className={`font-semibold ${margenReal >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {precioVenta > 0 ? `L${margenReal.toFixed(2)}` : '-'}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Toggles */}
-                      <div className="pt-3 border-t border-gray-100">
-                        {/* Bases de receta */}
-                        <div className="flex items-center gap-4 mb-3 pb-3 border-b border-gray-100 flex-wrap">
-                          <span className="text-xs font-medium text-gray-500 uppercase">Bases:</span>
-                          {/* Soul Chkn bases */}
-                          {brand?.id === '1' && (
-                            <>
-                              <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={basesActivas.polloFrito || false}
-                                  onChange={() => onToggleBaseReceta(recipe.id, 'polloFrito')}
-                                  className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
-                                />
-                                <span className="text-sm text-gray-700">Pollo Frito <span className="text-gray-400">(L{costoPolloFrito.toFixed(2)})</span></span>
-                              </label>
-                              <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={basesActivas.polloFritoEnsalada || false}
-                                  onChange={() => onToggleBaseReceta(recipe.id, 'polloFritoEnsalada')}
-                                  className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
-                                />
-                                <span className="text-sm text-gray-700">Pollo Ensalada/Sandwich <span className="text-gray-400">(L{costoPolloFritoEnsalada.toFixed(2)})</span></span>
-                              </label>
-                              <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={basesActivas.papasFritas || false}
-                                  onChange={() => onToggleBaseReceta(recipe.id, 'papasFritas')}
-                                  className="w-4 h-4 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500"
-                                />
-                                <span className="text-sm text-gray-700">Papas Fritas <span className="text-gray-400">(L{costoPapasFritas.toFixed(2)})</span></span>
-                              </label>
-                            </>
-                          )}
-                          {/* Green Memo bases (y otras marcas con bases simples) */}
-                          {brand?.id !== '1' && Object.entries(basesReceta || {}).filter(([k, v]) => v?.ingredientes || v?.subRecetas).map(([baseKey, base]) => (
-                            <label key={baseKey} className="flex items-center gap-2 cursor-pointer">
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      {/* Bases de receta */}
+                      <div className="flex items-center gap-4 mb-3 pb-3 border-b border-gray-100 flex-wrap">
+                        <span className="text-xs font-medium text-gray-500 uppercase">Bases:</span>
+                        {/* Soul Chkn bases */}
+                        {brand?.id === '1' && (
+                          <>
+                            <label className="flex items-center gap-2 cursor-pointer">
                               <input
                                 type="checkbox"
-                                checked={basesActivas[baseKey] || false}
-                                onChange={() => onToggleBaseReceta(recipe.id, baseKey)}
-                                className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                                checked={basesActivas.polloFrito || false}
+                                onChange={() => onToggleBaseReceta(recipe.id, 'polloFrito')}
+                                className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
                               />
-                              <span className="text-sm text-gray-700">{base.nombre} <span className="text-gray-400">(L{calcularCostoBaseSimple(base).toFixed(2)})</span></span>
+                              <span className="text-sm text-gray-700">Pollo Frito <span className="text-gray-400">(L{costoPolloFrito.toFixed(2)})</span></span>
                             </label>
-                          ))}
-                        </div>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={basesActivas.polloFritoEnsalada || false}
+                                onChange={() => onToggleBaseReceta(recipe.id, 'polloFritoEnsalada')}
+                                className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                              />
+                              <span className="text-sm text-gray-700">Pollo Ensalada/Sandwich <span className="text-gray-400">(L{costoPolloFritoEnsalada.toFixed(2)})</span></span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={basesActivas.papasFritas || false}
+                                onChange={() => onToggleBaseReceta(recipe.id, 'papasFritas')}
+                                className="w-4 h-4 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500"
+                              />
+                              <span className="text-sm text-gray-700">Papas Fritas <span className="text-gray-400">(L{costoPapasFritas.toFixed(2)})</span></span>
+                            </label>
+                          </>
+                        )}
+                        {/* Green Memo bases (y otras marcas con bases simples) */}
+                        {brand?.id !== '1' && Object.entries(basesReceta || {}).filter(([k, v]) => v?.ingredientes || v?.subRecetas).map(([baseKey, base]) => (
+                          <label key={baseKey} className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={basesActivas[baseKey] || false}
+                              onChange={() => onToggleBaseReceta(recipe.id, baseKey)}
+                              className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                            />
+                            <span className="text-sm text-gray-700">{base.nombre} <span className="text-gray-400">(L{calcularCostoBaseSimple(base).toFixed(2)})</span></span>
+                          </label>
+                        ))}
+                      </div>
 
-                        {/* Empaques / Materiales */}
-                        <div className="mb-3 pb-3 border-b border-gray-100">
-                          <span className="text-xs font-medium text-gray-500 uppercase block mb-2">Empaque / Materiales:</span>
-                          <div className="flex flex-wrap gap-2">
-                            {empaques.map(emp => {
-                              const empaquesActivos = empaquesPorReceta[recipe.id] || {};
-                              const isActive = empaquesActivos[emp.id] || false;
-                              return (
-                                <label key={emp.id} className="flex items-center gap-2 cursor-pointer">
-                                  <input
-                                    type="checkbox"
-                                    checked={isActive}
-                                    onChange={() => onToggleEmpaque(recipe.id, emp.id)}
-                                    className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                                  />
-                                  <span className="text-sm text-gray-700">{emp.nombre} <span className="text-gray-400">(L{emp.precio.toFixed(2)})</span></span>
-                                </label>
-                              );
-                            })}
-                          </div>
+                      {/* Empaques / Materiales */}
+                      <div className="mb-3 pb-3 border-b border-gray-100">
+                        <span className="text-xs font-medium text-gray-500 uppercase block mb-2">Empaque / Materiales:</span>
+                        <div className="flex flex-wrap gap-2">
+                          {empaques.map(emp => {
+                            const empaquesActivos = empaquesPorReceta[recipe.id] || {};
+                            const isActive = empaquesActivos[emp.id] || false;
+                            return (
+                              <label key={emp.id} className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={isActive}
+                                  onChange={() => onToggleEmpaque(recipe.id, emp.id)}
+                                  className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                                />
+                                <span className="text-sm text-gray-700">{emp.nombre} <span className="text-gray-400">(L{emp.precio.toFixed(2)})</span></span>
+                              </label>
+                            );
+                          })}
                         </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-6">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-gray-600">Delivery (+{configCostos.porcentajeDelivery}%)</span>
-                              <button
-                                onClick={() => onToggleDelivery(recipe.id)}
-                                className={`relative w-10 h-5 rounded-full transition-colors ${tieneDelivery ? 'bg-blue-500' : 'bg-gray-300'}`}
-                              >
-                                <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${tieneDelivery ? 'left-5' : 'left-0.5'}`} />
-                              </button>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-gray-600">ISV ({configCostos.porcentajeISV}%)</span>
-                              <button
-                                onClick={() => onToggleISV(recipe.id)}
-                                className={`relative w-10 h-5 rounded-full transition-colors ${tieneISV ? 'bg-green-500' : 'bg-gray-300'}`}
-                              >
-                                <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${tieneISV ? 'left-5' : 'left-0.5'}`} />
-                              </button>
-                            </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-6">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-600">Delivery (+{configCostos.porcentajeDelivery}%)</span>
+                            <button
+                              onClick={() => onToggleDelivery(recipe.id)}
+                              className={`relative w-10 h-5 rounded-full transition-colors ${tieneDelivery ? 'bg-blue-500' : 'bg-gray-300'}`}
+                            >
+                              <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${tieneDelivery ? 'left-5' : 'left-0.5'}`} />
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-600">ISV ({configCostos.porcentajeISV}%)</span>
+                            <button
+                              onClick={() => onToggleISV(recipe.id)}
+                              className={`relative w-10 h-5 rounded-full transition-colors ${tieneISV ? 'bg-green-500' : 'bg-gray-300'}`}
+                            >
+                              <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${tieneISV ? 'left-5' : 'left-0.5'}`} />
+                            </button>
                           </div>
                         </div>
                       </div>
