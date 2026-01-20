@@ -2492,6 +2492,7 @@ function DashboardScreen({
             onAdd={onAddReceta}
             onUpdate={onUpdateReceta}
             onDelete={onDeleteReceta}
+            onUpdateIngredient={onUpdateIngredient}
             configCostos={configCostos}
             deliveryPorReceta={deliveryPorReceta}
             onToggleDelivery={onToggleDelivery}
@@ -4001,12 +4002,21 @@ function BancoIngredientes({ ingredients, onAdd, onDelete, onUpdate }) {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [soloPendientes, setSoloPendientes] = useState(false);
+  const [soloPorValidar, setSoloPorValidar] = useState(false);
 
-  // Contar pendientes
+  // Contar pendientes (sin precio/peso)
   let totalPendientes = 0;
   for (let i = 0; i < ingredients.length; i++) {
     if (!ingredients[i].pesoCompra || !ingredients[i].precio) {
       totalPendientes++;
+    }
+  }
+
+  // Contar pendientes de validación
+  let totalPorValidar = 0;
+  for (let i = 0; i < ingredients.length; i++) {
+    if (ingredients[i].pendienteValidacion === true) {
+      totalPorValidar++;
     }
   }
 
@@ -4020,14 +4030,20 @@ function BancoIngredientes({ ingredients, onAdd, onDelete, onUpdate }) {
     
     const nombreIngrediente = ing.ingrediente.toLowerCase();
     const esPendiente = !ing.pesoCompra || !ing.precio;
+    const esPorValidar = ing.pendienteValidacion === true;
     
     // Filtro por búsqueda
     if (busqueda !== '' && !nombreIngrediente.includes(busqueda)) {
       continue;
     }
     
-    // Filtro por pendientes
+    // Filtro por pendientes (sin precio/peso)
     if (soloPendientes && !esPendiente) {
+      continue;
+    }
+
+    // Filtro por pendientes de validación
+    if (soloPorValidar && !esPorValidar) {
       continue;
     }
     
@@ -4064,7 +4080,7 @@ function BancoIngredientes({ ingredients, onAdd, onDelete, onUpdate }) {
         />
       </div>
 
-      {/* Botón Pendientes */}
+      {/* Botón Pendientes y Pendientes por validar */}
       <div className="mb-4 flex items-center gap-3">
         {totalPendientes > 0 && (
           <button
@@ -4081,10 +4097,26 @@ function BancoIngredientes({ ingredients, onAdd, onDelete, onUpdate }) {
             Pendientes ({totalPendientes})
           </button>
         )}
+
+        {totalPorValidar > 0 && (
+          <button
+            onClick={() => setSoloPorValidar(!soloPorValidar)}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
+              soloPorValidar 
+                ? 'bg-red-50 text-red-700 border-red-300' 
+                : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Por validar ({totalPorValidar})
+          </button>
+        )}
         
-        {(searchTerm || soloPendientes) && (
+        {(searchTerm || soloPendientes || soloPorValidar) && (
           <button 
-            onClick={() => { setSearchTerm(''); setSoloPendientes(false); }} 
+            onClick={() => { setSearchTerm(''); setSoloPendientes(false); setSoloPorValidar(false); }} 
             className="px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
           >
             Limpiar filtros
@@ -4093,7 +4125,7 @@ function BancoIngredientes({ ingredients, onAdd, onDelete, onUpdate }) {
       </div>
 
       {/* TABLA */}
-      <div key={`tabla-${busqueda}-${listaVisible.length}-${soloPendientes}`} className="bg-white border rounded-xl overflow-hidden">
+      <div key={`tabla-${busqueda}-${listaVisible.length}-${soloPendientes}-${soloPorValidar}`} className="bg-white border rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b">
             <tr>
@@ -4107,14 +4139,15 @@ function BancoIngredientes({ ingredients, onAdd, onDelete, onUpdate }) {
             {listaVisible.length === 0 ? (
               <tr>
                 <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
-                  {searchTerm || soloPendientes ? 'No se encontraron ingredientes' : 'No hay ingredientes'}
+                  {searchTerm || soloPendientes || soloPorValidar ? 'No se encontraron ingredientes' : 'No hay ingredientes'}
                 </td>
               </tr>
             ) : (
               listaVisible.map((ing, index) => {
                 const isPending = !ing.pesoCompra || !ing.precio;
+                const isPorValidar = ing.pendienteValidacion === true;
                 return (
-                  <tr key={`${ing.id}-${index}`} className={isPending ? 'bg-red-50/50' : 'hover:bg-gray-50'}>
+                  <tr key={`${ing.id}-${index}`} className={isPorValidar ? 'bg-yellow-50/50' : isPending ? 'bg-red-50/50' : 'hover:bg-gray-50'}>
                     <td className="px-4 py-3">
                       <span className="font-medium text-gray-900">{ing.ingrediente}</span>
                       {isPending && <span className="ml-2 px-1.5 py-0.5 bg-red-100 text-red-600 rounded text-xs">Pendiente</span>}
@@ -4127,6 +4160,14 @@ function BancoIngredientes({ ingredients, onAdd, onDelete, onUpdate }) {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-center gap-2">
+                        {isPorValidar && (
+                          <button 
+                            onClick={() => onUpdate({ ...ing, pendienteValidacion: false })} 
+                            className="px-2 py-1 text-xs text-yellow-700 hover:bg-yellow-100 rounded border border-yellow-300 bg-yellow-50"
+                          >
+                            Validar
+                          </button>
+                        )}
                         <button 
                           onClick={() => setViewingIngredient(ing)} 
                           className="px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded border border-blue-200"
@@ -4276,6 +4317,7 @@ function IngredientModal({ ingredient, ingredients, onClose, onSave }) {
       pesoCompra: formData.pesoCompra ? parseFloat(formData.pesoCompra) : null,
       precio: formData.precio ? parseFloat(formData.precio) : null,
       merma: formData.merma ? parseFloat(formData.merma) : 0,
+      pendienteValidacion: false, // Marcar como validado al guardar
     });
   };
 
@@ -4458,7 +4500,7 @@ function IngredientModal({ ingredient, ingredients, onClose, onSave }) {
 // ============================================
 // MÓDULO DE RECETAS
 // ============================================
-function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, configCostos, deliveryPorReceta, onToggleDelivery, isvPorReceta, onToggleISV, precioVentaPorReceta, onUpdatePrecioVenta, onUpdatePrecioCliente, calcularTotales, basesReceta, basesPorReceta, onToggleBaseReceta, calcularCostoPolloFrito, calcularCostoPolloFritoEnsalada, calcularCostoPapasFritas, calcularCostoBaseSimple, calcularCostoBases, brand, empaques, empaquesPorReceta, onToggleEmpaque, calcularCostoEmpaques }) {
+function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, onUpdateIngredient, configCostos, deliveryPorReceta, onToggleDelivery, isvPorReceta, onToggleISV, precioVentaPorReceta, onUpdatePrecioVenta, onUpdatePrecioCliente, calcularTotales, basesReceta, basesPorReceta, onToggleBaseReceta, calcularCostoPolloFrito, calcularCostoPolloFritoEnsalada, calcularCostoPapasFritas, calcularCostoBaseSimple, calcularCostoBases, brand, empaques, empaquesPorReceta, onToggleEmpaque, calcularCostoEmpaques }) {
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [showNewRecipeModal, setShowNewRecipeModal] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState(null);
@@ -4562,6 +4604,7 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, config
           onUpdate(updated);
           setSelectedRecipe(updated);
         }}
+        onUpdateIngredient={onUpdateIngredient}
         calcularCostoSubReceta={calcularCostoSubReceta}
         calcularCostoPorcion={calcularCostoPorcion}
         calcularCostoDirecto={calcularCostoDirecto}
@@ -5009,7 +5052,7 @@ function NewRecipeModal({ onClose, onSave }) {
 // ============================================
 // DETALLE DE RECETA
 // ============================================
-function RecipeDetail({ recipe, ingredients, onBack, onUpdate, calcularCostoSubReceta, calcularCostoPorcion, calcularCostoDirecto, costoFijoPorPlato, configCostos, tieneDelivery, onToggleDelivery, tieneISV, onToggleISV, precioVenta, onUpdatePrecioVenta, onUpdatePrecioCliente, getFoodCostColor, basesReceta, basesPorReceta, onToggleBaseReceta, calcularCostoBases, calcularCostoBaseSimple, brand, costoPolloFrito, costoPapasFritas, empaques, empaquesPorReceta, onToggleEmpaque, calcularCostoEmpaques, subRecetaTieneIncompletos }) {
+function RecipeDetail({ recipe, ingredients, onBack, onUpdate, onUpdateIngredient, calcularCostoSubReceta, calcularCostoPorcion, calcularCostoDirecto, costoFijoPorPlato, configCostos, tieneDelivery, onToggleDelivery, tieneISV, onToggleISV, precioVenta, onUpdatePrecioVenta, onUpdatePrecioCliente, getFoodCostColor, basesReceta, basesPorReceta, onToggleBaseReceta, calcularCostoBases, calcularCostoBaseSimple, brand, costoPolloFrito, costoPapasFritas, empaques, empaquesPorReceta, onToggleEmpaque, calcularCostoEmpaques, subRecetaTieneIncompletos }) {
   const [showNewSubReceta, setShowNewSubReceta] = useState(false);
   const [editingSubReceta, setEditingSubReceta] = useState(null);
   const [expandedSubReceta, setExpandedSubReceta] = useState(null);
@@ -5242,7 +5285,14 @@ function RecipeDetail({ recipe, ingredients, onBack, onUpdate, calcularCostoSubR
                               {ing.ingredienteNombre}
                               {merma > 0 && <span className="ml-2 text-xs text-amber-600">({merma}% merma)</span>}
                               {!bancoIng && ing.ingredienteNombre && <span className="ml-2 text-xs text-red-600">(No en banco)</span>}
-                              {isPendienteValidacion && <span className="ml-2 text-xs text-yellow-600">(Por validar)</span>}
+                              {isPendienteValidacion && (
+                                <button
+                                  onClick={() => onUpdateIngredient({ ...bancoIng, pendienteValidacion: false })}
+                                  className="ml-2 text-xs text-yellow-600 hover:text-yellow-800 underline"
+                                >
+                                  Validar
+                                </button>
+                              )}
                             </td>
                             <td className="px-4 py-2 text-right text-gray-600">{ing.peso}g</td>
                             <td className={`px-4 py-2 text-right ${sinPesoCompra ? 'text-red-500 font-medium' : 'text-gray-600'}`}>
