@@ -4503,6 +4503,7 @@ function IngredientModal({ ingredient, ingredients, onClose, onSave }) {
 function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, onUpdateIngredient, configCostos, deliveryPorReceta, onToggleDelivery, isvPorReceta, onToggleISV, precioVentaPorReceta, onUpdatePrecioVenta, onUpdatePrecioCliente, calcularTotales, basesReceta, basesPorReceta, onToggleBaseReceta, calcularCostoPolloFrito, calcularCostoPolloFritoEnsalada, calcularCostoPapasFritas, calcularCostoBaseSimple, calcularCostoBases, brand, empaques, empaquesPorReceta, onToggleEmpaque, calcularCostoEmpaques }) {
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [showNewRecipeModal, setShowNewRecipeModal] = useState(false);
+  const [showResumenCostos, setShowResumenCostos] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [expandedCostos, setExpandedCostos] = useState({});
@@ -4642,15 +4643,26 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, onUpda
           <h2 className="text-xl font-semibold text-gray-900">Recetas</h2>
           <p className="text-sm text-gray-500">{filteredRecipes.length} de {recipes.length} receta{recipes.length !== 1 ? 's' : ''}</p>
         </div>
-        <button
-          onClick={() => setShowNewRecipeModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800"
-        >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          Nueva receta
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowResumenCostos(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Resumen Costos
+          </button>
+          <button
+            onClick={() => setShowNewRecipeModal(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Nueva receta
+          </button>
+        </div>
       </div>
 
       {/* Barra de búsqueda */}
@@ -4986,6 +4998,108 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, onUpda
               <button onClick={() => { onDelete(deleteConfirm.id); setDeleteConfirm(null); }} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">
                 Sí
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Resumen de Costos */}
+      {showResumenCostos && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-5 z-50" onClick={() => setShowResumenCostos(false)}>
+          <div className="w-full max-w-2xl bg-white rounded-xl max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-gray-900">Resumen de Costos</h3>
+              <button onClick={() => setShowResumenCostos(false)} className="text-gray-400 hover:text-gray-600">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="overflow-auto flex-1">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 sticky top-0">
+                  <tr>
+                    <th className="text-left px-4 py-2 font-medium text-gray-600">Receta</th>
+                    <th className="text-right px-4 py-2 font-medium text-gray-600">PVP</th>
+                    <th className="text-right px-4 py-2 font-medium text-gray-600">Food Cost</th>
+                    <th className="text-right px-4 py-2 font-medium text-gray-600">
+                      Margen Real
+                      <svg className="w-3 h-3 inline ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M5 12l7-7 7 7" />
+                      </svg>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {recipes.map(recipe => {
+                    const tieneDelivery = deliveryPorReceta[recipe.id] || false;
+                    const tieneISV = isvPorReceta[recipe.id] || false;
+                    const precioVenta = precioVentaPorReceta[recipe.id] || 0;
+                    
+                    // Calcular costo directo
+                    const costoSubRecetas = recipe.subRecetas.reduce((sum, sr) => sum + calcularCostoSubReceta(sr), 0);
+                    const basesActivas = basesPorReceta[recipe.id] || {};
+                    let costoBases = 0;
+                    if (brand?.id === '1') {
+                      if (basesActivas.polloFrito) costoBases += costoPolloFrito;
+                      if (basesActivas.polloFritoEnsalada) costoBases += costoPolloFritoEnsalada;
+                      if (basesActivas.papasFritas) costoBases += costoPapasFritas;
+                    } else {
+                      Object.entries(basesActivas).forEach(([key, active]) => {
+                        if (active && basesReceta?.[key]) {
+                          costoBases += calcularCostoBaseSimple(basesReceta[key]);
+                        }
+                      });
+                    }
+                    const costoDirecto = costoSubRecetas + costoBases;
+                    
+                    // Calcular costo empaques
+                    const empaquesActivos = empaquesPorReceta[recipe.id] || {};
+                    const costoEmpaques = empaques.reduce((sum, emp) => {
+                      return sum + (empaquesActivos[emp.id] ? emp.precio : 0);
+                    }, 0);
+                    
+                    const costoTotal = costoDirecto + costoEmpaques;
+                    
+                    // Calcular PVP
+                    const montoISV = tieneISV ? precioVenta * (configCostos.porcentajeISV / 100) : 0;
+                    const precioBase = precioVenta + montoISV;
+                    const montoDelivery = tieneDelivery ? precioBase * (configCostos.porcentajeDelivery / 100) : 0;
+                    const pvp = precioBase + montoDelivery;
+                    
+                    // Calcular Food Cost y Margen Real
+                    const foodCost = precioVenta > 0 ? (costoDirecto / precioVenta) * 100 : 0;
+                    const margenReal = precioVenta > 0 ? precioVenta - costoTotal - costoFijoPorPlato : -999999;
+                    
+                    return { recipe, precioVenta, pvp, foodCost, margenReal };
+                  })
+                  .sort((a, b) => a.margenReal - b.margenReal)
+                  .map(({ recipe, precioVenta, pvp, foodCost, margenReal }) => (
+                    <tr key={recipe.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-2 text-gray-900 font-medium">{recipe.nombre}</td>
+                      <td className="px-4 py-2 text-right text-gray-700">
+                        {precioVenta > 0 ? `L${pvp.toFixed(2)}` : '-'}
+                      </td>
+                      <td className={`px-4 py-2 text-right font-medium ${
+                        precioVenta === 0 ? 'text-gray-400' :
+                        foodCost <= 30 ? 'text-green-600' : 
+                        foodCost <= 35 ? 'text-amber-600' : 'text-red-600'
+                      }`}>
+                        {precioVenta > 0 ? `${foodCost.toFixed(1)}%` : '-'}
+                      </td>
+                      <td className={`px-4 py-2 text-right font-medium ${
+                        precioVenta === 0 ? 'text-gray-400' :
+                        margenReal >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {precioVenta > 0 ? `L${margenReal.toFixed(2)}` : '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="p-3 border-t border-gray-200 bg-gray-50">
+              <p className="text-xs text-gray-500 text-center">{recipes.length} recetas · Ordenado por margen real (menor a mayor)</p>
             </div>
           </div>
         </div>
