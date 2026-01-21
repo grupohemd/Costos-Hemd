@@ -5036,8 +5036,8 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, onUpda
                     const tieneISV = isvPorReceta[recipe.id] || false;
                     const precioVenta = precioVentaPorReceta[recipe.id] || 0;
                     
-                    // Calcular costo directo
-                    const costoSubRecetas = recipe.subRecetas.reduce((sum, sr) => sum + calcularCostoSubReceta(sr), 0);
+                    // Calcular costo directo (usar calcularCostoPorcion, no calcularCostoSubReceta)
+                    const costoSubRecetas = recipe.subRecetas.reduce((sum, sr) => sum + calcularCostoPorcion(sr), 0);
                     const basesActivas = basesPorReceta[recipe.id] || {};
                     let costoBases = 0;
                     if (brand?.id === '1') {
