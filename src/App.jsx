@@ -1553,15 +1553,137 @@ export default function App() {
         if (data.configCostos) setConfigCostos(data.configCostos);
         
         // Migración: Si hay datos en formato antiguo, convertirlos
+        // Definir las bases iniciales de Green Memo para usarlas si no existen en Firebase
+        const basesInicialesGreenMemo = {
+          chimichurri: {
+            id: 'base_chimichurri',
+            nombre: 'Chimichurri',
+            activo: true,
+            pesoReceta: 515,
+            pesoPorcion: 15,
+            ingredientes: [
+              { id: 'chim1', nombre: 'Oregano', pesoUsado: 2.66, pesoCompra: 612, precioCompra: 488.75 },
+              { id: 'chim2', nombre: 'Ajo', pesoUsado: 17, pesoCompra: 454, precioCompra: 67.95 },
+              { id: 'chim3', nombre: 'Perejil', pesoUsado: 35, pesoCompra: 50, precioCompra: 19.99 },
+              { id: 'chim4', nombre: 'Cilantro', pesoUsado: 25, pesoCompra: 50, precioCompra: 14.00 },
+              { id: 'chim5', nombre: 'Vinagre vino tinto', pesoUsado: 20, pesoCompra: 473, precioCompra: 97.15 },
+              { id: 'chim6', nombre: 'Aceite de oliva', pesoUsado: 300, pesoCompra: 4600, precioCompra: 1051.00 },
+              { id: 'chim7', nombre: 'Agua hirviendo', pesoUsado: 120, pesoCompra: 5000, precioCompra: 50.00 },
+              { id: 'chim8', nombre: 'Sal', pesoUsado: 6.52, pesoCompra: 737, precioCompra: 139.95 },
+              { id: 'chim9', nombre: 'Pimienta', pesoUsado: 2.4, pesoCompra: 453, precioCompra: 177.95 }
+            ]
+          },
+          pechugaAdobada: {
+            id: 'base_pechuga_adobada',
+            nombre: 'Pechuga Adobada',
+            activo: true,
+            subRecetas: [
+              {
+                nombre: 'Marinado del Pollo',
+                pesoReceta: 1470,
+                pesoPorcion: 25,
+                ingredientes: [
+                  { id: 'mar1', nombre: 'Rapadura', pesoUsado: 200, pesoCompra: 1120, precioCompra: 40.90 },
+                  { id: 'mar2', nombre: 'Aceite mazola', pesoUsado: 260, pesoCompra: 15875, precioCompra: 940.00 },
+                  { id: 'mar3', nombre: 'Vinagre', pesoUsado: 60, pesoCompra: 3700, precioCompra: 129.95 },
+                  { id: 'mar4', nombre: 'Salsa Valentina', pesoUsado: 60, pesoCompra: 370, precioCompra: 44.99 },
+                  { id: 'mar5', nombre: 'BBQ', pesoUsado: 100, pesoCompra: 2300, precioCompra: 219.95 },
+                  { id: 'mar6', nombre: 'Jugo de limon', pesoUsado: 100, pesoCompra: 2250, precioCompra: 109.95 },
+                  { id: 'mar7', nombre: 'Cascara de limon', pesoUsado: 240, pesoCompra: 0, precioCompra: 0 },
+                  { id: 'mar8', nombre: 'Jugo naranja agria', pesoUsado: 210, pesoCompra: 600, precioCompra: 24.99 },
+                  { id: 'mar9', nombre: 'Cebolla blanca', pesoUsado: 225, pesoCompra: 1360, precioCompra: 99.95 },
+                  { id: 'mar10', nombre: 'Comino', pesoUsado: 15, pesoCompra: 57, precioCompra: 59.99 },
+                  { id: 'mar11', nombre: 'Ajo en polvo', pesoUsado: 18, pesoCompra: 680, precioCompra: 199.95 },
+                  { id: 'mar12', nombre: 'Cebolla en polvo', pesoUsado: 14.5, pesoCompra: 77.96, precioCompra: 58.90 },
+                  { id: 'mar13', nombre: 'Sal', pesoUsado: 17, pesoCompra: 2948, precioCompra: 139.95 },
+                  { id: 'mar14', nombre: 'Mostaza', pesoUsado: 60, pesoCompra: 190, precioCompra: 29.99 },
+                  { id: 'mar15', nombre: 'Pimienta', pesoUsado: 5, pesoCompra: 453, precioCompra: 169.95 },
+                  { id: 'mar16', nombre: 'Paprika', pesoUsado: 16, pesoCompra: 453, precioCompra: 154.95 },
+                  { id: 'mar17', nombre: 'Mantequilla en barra', pesoUsado: 180, pesoCompra: 454, precioCompra: 244.95 },
+                  { id: 'mar18', nombre: 'Ajo', pesoUsado: 25, pesoCompra: 454, precioCompra: 59.95 }
+                ]
+              },
+              {
+                nombre: 'Pechuga con Achiote',
+                pesoReceta: 320.8,
+                pesoPorcion: 320.8,
+                ingredientes: [
+                  { id: 'pech1', nombre: 'Pechuga de pollo', pesoUsado: 320, pesoCompra: 453, precioCompra: 60.00 },
+                  { id: 'pech2', nombre: 'Achiote', pesoUsado: 0.8, pesoCompra: 340, precioCompra: 51.95 }
+                ]
+              }
+            ]
+          },
+          filete: {
+            id: 'base_filete',
+            nombre: 'Filete a la Parrilla',
+            activo: true,
+            pesoReceta: 150,
+            pesoPorcion: 150,
+            ingredientes: [
+              { id: 'fil1', nombre: 'Filete', pesoUsado: 150, pesoCompra: 453, precioCompra: 225.00 }
+            ]
+          },
+          mezclumLechugas: {
+            id: 'base_mezclum',
+            nombre: 'Mezclum de Lechugas',
+            activo: true,
+            subRecetas: [
+              {
+                nombre: 'Vinagreta',
+                pesoReceta: 136.53,
+                pesoPorcion: 10,
+                ingredientes: [
+                  { id: 'vin1', nombre: 'Aceite de oliva', pesoUsado: 100, pesoCompra: 4600, precioCompra: 1051.00 },
+                  { id: 'vin2', nombre: 'Vinagre blanco', pesoUsado: 33, pesoCompra: 3700, precioCompra: 129.95 },
+                  { id: 'vin3', nombre: 'Sal', pesoUsado: 3.53, pesoCompra: 2948, precioCompra: 139.95 }
+                ]
+              },
+              {
+                nombre: 'Mezclum Lechugas',
+                pesoReceta: 30,
+                pesoPorcion: 30,
+                ingredientes: [
+                  { id: 'mez1', nombre: 'Lechuga romana', pesoUsado: 15, pesoCompra: 300, precioCompra: 20.00 },
+                  { id: 'mez2', nombre: 'Lechuga escarola', pesoUsado: 15, pesoCompra: 800, precioCompra: 41.95 }
+                ]
+              },
+              {
+                nombre: 'Toppings',
+                pesoReceta: 0.4,
+                pesoPorcion: 0.4,
+                ingredientes: [
+                  { id: 'top1', nombre: 'Ajonjoli blanco', pesoUsado: 0.2, pesoCompra: 453, precioCompra: 161.00 },
+                  { id: 'top2', nombre: 'Linaza', pesoUsado: 0.2, pesoCompra: 280, precioCompra: 38.95 }
+                ]
+              }
+            ]
+          }
+        };
+
         if (data.basesRecetaPorMarca) {
-          setBasesRecetaPorMarca(data.basesRecetaPorMarca);
+          // Verificar si las bases de Green Memo están correctas (tienen chimichurri, no polloFrito)
+          const basesGM = data.basesRecetaPorMarca['2'];
+          const tieneBasesGMCorrectas = basesGM && basesGM.chimichurri;
+          
+          // Verificar Soul Chkn también
+          const basesSC = data.basesRecetaPorMarca['1'];
+          
+          setBasesRecetaPorMarca({
+            '1': basesSC || basesRecetaPorMarca['1'], // Usar las de Firebase o las iniciales
+            '2': tieneBasesGMCorrectas ? basesGM : basesInicialesGreenMemo
+          });
         } else if (data.basesReceta) {
           // Migrar formato antiguo: basesReceta global → basesRecetaPorMarca
           console.log('Migrando basesReceta a formato por marca...');
           setBasesRecetaPorMarca({
             '1': data.basesReceta,
-            '2': { polloFrito: null, polloFritoEnsalada: null, papasFritas: null }
+            '2': basesInicialesGreenMemo
           });
+        } else {
+          // No hay bases en Firebase, asegurar que usemos las iniciales
+          console.log('No hay bases en Firebase, usando iniciales');
+          // No hacer nada, mantener el estado inicial que ya tiene las bases correctas
         }
         
         if (data.basesPorReceta) setBasesPorReceta(data.basesPorReceta);
