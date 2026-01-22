@@ -1772,6 +1772,55 @@ export default function App() {
     }));
   };
 
+  const handleDuplicateReceta = (recetaOriginal) => {
+    const newId = Date.now().toString();
+    
+    // Crear copia de la receta con nuevo ID
+    const recetaDuplicada = {
+      ...recetaOriginal,
+      id: newId,
+      nombre: `${recetaOriginal.nombre} (copia)`,
+      fechaActualizacion: new Date().toLocaleDateString('es-HN'),
+      subRecetas: recetaOriginal.subRecetas.map(sr => ({
+        ...sr,
+        id: 'sr' + Date.now() + Math.random().toString(36).substr(2, 9),
+        ingredientes: sr.ingredientes.map(ing => ({
+          ...ing,
+          id: 'i' + Date.now() + Math.random().toString(36).substr(2, 9)
+        }))
+      }))
+    };
+    
+    // Insertar después de la original
+    setRecetasPorMarca(prev => {
+      const recetas = prev[selectedBrand.id] || [];
+      const index = recetas.findIndex(r => r.id === recetaOriginal.id);
+      const newRecetas = [...recetas];
+      newRecetas.splice(index + 1, 0, recetaDuplicada);
+      return {
+        ...prev,
+        [selectedBrand.id]: newRecetas
+      };
+    });
+    
+    // Copiar configuraciones
+    if (deliveryPorReceta[recetaOriginal.id]) {
+      setDeliveryPorReceta(prev => ({ ...prev, [newId]: true }));
+    }
+    if (isvPorReceta[recetaOriginal.id]) {
+      setIsvPorReceta(prev => ({ ...prev, [newId]: true }));
+    }
+    if (precioVentaPorReceta[recetaOriginal.id]) {
+      setPrecioVentaPorReceta(prev => ({ ...prev, [newId]: precioVentaPorReceta[recetaOriginal.id] }));
+    }
+    if (basesPorReceta[recetaOriginal.id]) {
+      setBasesPorReceta(prev => ({ ...prev, [newId]: { ...basesPorReceta[recetaOriginal.id] } }));
+    }
+    if (empaquesPorReceta[recetaOriginal.id]) {
+      setEmpaquesPorReceta(prev => ({ ...prev, [newId]: { ...empaquesPorReceta[recetaOriginal.id] } }));
+    }
+  };
+
   // Funciones para configuración de costos
   const handleUpdateConfigCostos = (newConfig) => {
     setConfigCostos(newConfig);
@@ -1833,7 +1882,16 @@ export default function App() {
     }));
   };
 
-  const handleToggleBaseReceta = (recetaId, baseKey) => {
+  const handleToggleBaseReceta = (recetaId, baseKey, copyBases = null) => {
+    // Si se pasan bases para copiar, copiarlas directamente
+    if (copyBases) {
+      setBasesPorReceta(prev => ({
+        ...prev,
+        [recetaId]: { ...copyBases }
+      }));
+      return;
+    }
+    // Toggle normal
     setBasesPorReceta(prev => ({
       ...prev,
       [recetaId]: {
@@ -2082,6 +2140,7 @@ export default function App() {
               onAddReceta={handleAddReceta}
               onDeleteReceta={handleDeleteReceta}
               onUpdateReceta={handleUpdateReceta}
+              onDuplicateReceta={handleDuplicateReceta}
               // Configuración de costos
               configCostos={configCostos}
               onUpdateConfigCostos={handleUpdateConfigCostos}
@@ -2389,6 +2448,7 @@ function DashboardScreen({
   onAddReceta,
   onDeleteReceta,
   onUpdateReceta,
+  onDuplicateReceta,
   // Configuración de costos
   configCostos,
   onUpdateConfigCostos,
@@ -2492,6 +2552,7 @@ function DashboardScreen({
             onAdd={onAddReceta}
             onUpdate={onUpdateReceta}
             onDelete={onDeleteReceta}
+            onDuplicate={onDuplicateReceta}
             onUpdateIngredient={onUpdateIngredient}
             configCostos={configCostos}
             deliveryPorReceta={deliveryPorReceta}
@@ -4500,7 +4561,7 @@ function IngredientModal({ ingredient, ingredients, onClose, onSave }) {
 // ============================================
 // MÓDULO DE RECETAS
 // ============================================
-function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, onUpdateIngredient, configCostos, deliveryPorReceta, onToggleDelivery, isvPorReceta, onToggleISV, precioVentaPorReceta, onUpdatePrecioVenta, onUpdatePrecioCliente, calcularTotales, basesReceta, basesPorReceta, onToggleBaseReceta, calcularCostoPolloFrito, calcularCostoPolloFritoEnsalada, calcularCostoPapasFritas, calcularCostoBaseSimple, calcularCostoBases, brand, empaques, empaquesPorReceta, onToggleEmpaque, calcularCostoEmpaques }) {
+function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, onDuplicate, onUpdateIngredient, configCostos, deliveryPorReceta, onToggleDelivery, isvPorReceta, onToggleISV, precioVentaPorReceta, onUpdatePrecioVenta, onUpdatePrecioCliente, calcularTotales, basesReceta, basesPorReceta, onToggleBaseReceta, calcularCostoPolloFrito, calcularCostoPolloFritoEnsalada, calcularCostoPapasFritas, calcularCostoBaseSimple, calcularCostoBases, brand, empaques, empaquesPorReceta, onToggleEmpaque, calcularCostoEmpaques }) {
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [showNewRecipeModal, setShowNewRecipeModal] = useState(false);
   const [showResumenCostos, setShowResumenCostos] = useState(false);
@@ -4722,6 +4783,8 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, onUpda
             const precioCliente = precioBase + montoDelivery;
             // Food Cost = Costo Directo / Precio Venta (NUNCA usa costo fijo)
             const foodCost = precioVenta > 0 ? (costoDirecto / precioVenta) * 100 : 0;
+            // Margen Contribución = Precio Venta - Costo Total (SIN restar costo fijo)
+            const margenContribucion = precioVenta - costoTotal;
             // Margen Real = Precio Venta - Costo Total - Costo Fijo (delivery lo paga el cliente)
             const margenReal = precioVenta - costoTotal - costoFijoPorPlato;
             const foodCostColors = getFoodCostColor(foodCost);
@@ -4769,6 +4832,16 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, onUpda
                   </button>
                   <div className="flex items-center gap-1 border-l border-gray-200 pl-4">
                     <button
+                      onClick={() => onDuplicate(recipe)}
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      title="Duplicar"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                      </svg>
+                    </button>
+                    <button
                       onClick={() => setDeleteConfirm(recipe)}
                       className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                       title="Eliminar"
@@ -4782,7 +4855,7 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, onUpda
 
                 {/* Costos siempre visibles */}
                 <div className="px-5 pb-3 pt-0">
-                  {/* Costos principales */}
+                  {/* Fila 1: Costos principales */}
                   <div className="grid grid-cols-3 gap-3 text-sm mb-3">
                     <div className="bg-gray-50 rounded-lg p-3">
                       <p className="text-gray-500 text-xs mb-1">
@@ -4802,9 +4875,9 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, onUpda
                     </div>
                   </div>
 
-                  {/* Precio de venta e ISV */}
-                  <div className="grid grid-cols-5 gap-3 text-sm p-4 bg-gray-50 rounded-lg mb-3">
-                    <div className="bg-white rounded-lg p-3 border border-gray-200">
+                  {/* Fila 2: Precio de venta, ISV, PVP */}
+                  <div className="grid grid-cols-3 gap-3 text-sm mb-3">
+                    <div className="bg-gray-50 rounded-lg p-3">
                       <p className="text-gray-500 text-xs mb-1">Precio Venta</p>
                       <div className="flex items-baseline">
                         <span className="text-gray-400 text-sm mr-0.5">L</span>
@@ -4817,13 +4890,13 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, onUpda
                         />
                       </div>
                     </div>
-                    <div className="bg-white rounded-lg p-3 border border-gray-200">
+                    <div className="bg-gray-50 rounded-lg p-3">
                       <p className="text-gray-500 text-xs mb-1">ISV ({configCostos.porcentajeISV}%)</p>
                       <p className={`font-semibold ${tieneISV ? 'text-gray-900' : 'text-gray-400'}`}>
                         L{montoISV.toFixed(2)}
                       </p>
                     </div>
-                    <div className={`rounded-lg p-3 border ${tieneDelivery ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200'}`}>
+                    <div className={`rounded-lg p-3 ${tieneDelivery ? 'bg-blue-50' : 'bg-gray-50'}`}>
                       <p className={`text-xs mb-1 ${tieneDelivery ? 'text-blue-600' : 'text-gray-500'}`}>
                         PVP {tieneDelivery ? `(+${configCostos.porcentajeDelivery}%)` : ''}
                       </p>
@@ -4839,15 +4912,25 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, onUpda
                         />
                       </div>
                     </div>
-                    <div className={`rounded-lg p-3 border ${precioVenta > 0 ? foodCostColors.bg + ' ' + foodCostColors.border : 'bg-white border-gray-200'}`}>
+                  </div>
+
+                  {/* Fila 3: Food Cost, Margen Contribución, Margen Real */}
+                  <div className="grid grid-cols-3 gap-3 text-sm mb-3">
+                    <div className={`rounded-lg p-3 ${precioVenta > 0 ? foodCostColors.bg : 'bg-gray-50'}`}>
                       <p className={`text-xs mb-1 ${precioVenta > 0 ? foodCostColors.text : 'text-gray-500'}`}>Food Cost</p>
                       <p className={`font-semibold ${precioVenta > 0 ? foodCostColors.text : 'text-gray-400'}`}>
                         {precioVenta > 0 ? `${foodCost.toFixed(1)}%` : '-'}
                       </p>
                     </div>
-                    <div className="bg-white rounded-lg p-3 border border-gray-200">
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-gray-500 text-xs mb-1">Margen Contribución</p>
+                      <p className={`font-semibold ${precioVenta > 0 ? (margenContribucion >= 0 ? 'text-green-600' : 'text-red-600') : 'text-gray-400'}`}>
+                        {precioVenta > 0 ? `L${margenContribucion.toFixed(2)}` : '-'}
+                      </p>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-3">
                       <p className="text-gray-500 text-xs mb-1">Margen Real</p>
-                      <p className={`font-semibold ${margenReal >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      <p className={`font-semibold ${precioVenta > 0 ? (margenReal >= 0 ? 'text-green-600' : 'text-red-600') : 'text-gray-400'}`}>
                         {precioVenta > 0 ? `L${margenReal.toFixed(2)}` : '-'}
                       </p>
                     </div>
