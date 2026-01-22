@@ -2603,13 +2603,28 @@ function DashboardScreen({
   syncStatus
 }) {
   const [currentModule, setCurrentModule] = useState('menu');
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
+
+  // Manejar navegación hacia atrás
+  const handleBack = () => {
+    if (selectedRecipe) {
+      // Si hay receta seleccionada, volver al listado de recetas
+      setSelectedRecipe(null);
+    } else if (currentModule !== 'menu') {
+      // Si está en un módulo, volver al menú de la marca
+      setCurrentModule('menu');
+    } else {
+      // Si está en el menú de la marca, volver al menú principal
+      onBack();
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
       <header className="flex justify-between items-center px-6 py-4 bg-white border-b border-gray-200">
         <div className="flex items-center gap-3">
           <button 
-            onClick={currentModule === 'menu' ? onBack : () => setCurrentModule('menu')} 
+            onClick={handleBack} 
             className="w-9 h-9 flex items-center justify-center border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 transition-colors"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -2617,31 +2632,36 @@ function DashboardScreen({
             </svg>
           </button>
           <div 
-            className="px-3 py-1.5 text-sm font-medium rounded-md"
+            className="px-3 py-1.5 text-sm font-medium rounded-md cursor-pointer hover:opacity-80"
             style={{ 
               backgroundColor: brand.color + '15',
               color: brand.color
             }}
+            onClick={() => { setSelectedRecipe(null); setCurrentModule('menu'); }}
+            title="Ir al menú de la marca"
           >
             {brand.name}
           </div>
           {currentModule !== 'menu' && (
-            <span className="text-gray-400 mx-2">/</span>
+            <>
+              <span className="text-gray-400 mx-2">/</span>
+              <span 
+                className={`text-sm font-medium ${selectedRecipe ? 'text-gray-500 cursor-pointer hover:text-gray-700' : 'text-gray-700'}`}
+                onClick={selectedRecipe ? () => setSelectedRecipe(null) : undefined}
+              >
+                {currentModule === 'ingredientes' && 'Banco de Ingredientes (Compartido)'}
+                {currentModule === 'recetas' && 'Recetas'}
+                {currentModule === 'costos' && 'Configuración de Costos'}
+                {currentModule === 'bases' && 'Bases de Receta'}
+                {currentModule === 'empaques' && 'Empaques / Materiales'}
+              </span>
+            </>
           )}
-          {currentModule === 'ingredientes' && (
-            <span className="text-sm font-medium text-gray-700">Banco de Ingredientes (Compartido)</span>
-          )}
-          {currentModule === 'recetas' && (
-            <span className="text-sm font-medium text-gray-700">Recetas</span>
-          )}
-          {currentModule === 'costos' && (
-            <span className="text-sm font-medium text-gray-700">Configuración de Costos</span>
-          )}
-          {currentModule === 'bases' && (
-            <span className="text-sm font-medium text-gray-700">Bases de Receta</span>
-          )}
-          {currentModule === 'empaques' && (
-            <span className="text-sm font-medium text-gray-700">Empaques / Materiales</span>
+          {selectedRecipe && (
+            <>
+              <span className="text-gray-400 mx-2">/</span>
+              <span className="text-sm font-medium text-gray-700 truncate max-w-[200px]">{selectedRecipe.nombre}</span>
+            </>
           )}
         </div>
         <div className="flex items-center gap-4">
@@ -2698,6 +2718,8 @@ function DashboardScreen({
             empaquesPorReceta={empaquesPorReceta}
             onToggleEmpaque={onToggleEmpaque}
             calcularCostoEmpaques={calcularCostoEmpaques}
+            selectedRecipe={selectedRecipe}
+            setSelectedRecipe={setSelectedRecipe}
           />
         )}
         {currentModule === 'costos' && (
@@ -4683,8 +4705,7 @@ function IngredientModal({ ingredient, ingredients, onClose, onSave }) {
 // ============================================
 // MÓDULO DE RECETAS
 // ============================================
-function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, onDuplicate, onUpdateIngredient, configCostos, deliveryPorReceta, onToggleDelivery, isvPorReceta, onToggleISV, precioVentaPorReceta, onUpdatePrecioVenta, onUpdatePrecioCliente, calcularTotales, basesReceta, basesPorReceta, onToggleBaseReceta, calcularCostoPolloFrito, calcularCostoPolloFritoEnsalada, calcularCostoPapasFritas, calcularCostoBaseSimple, calcularCostoBases, brand, empaques, empaquesPorReceta, onToggleEmpaque, calcularCostoEmpaques }) {
-  const [selectedRecipe, setSelectedRecipe] = useState(null);
+function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, onDuplicate, onUpdateIngredient, configCostos, deliveryPorReceta, onToggleDelivery, isvPorReceta, onToggleISV, precioVentaPorReceta, onUpdatePrecioVenta, onUpdatePrecioCliente, calcularTotales, basesReceta, basesPorReceta, onToggleBaseReceta, calcularCostoPolloFrito, calcularCostoPolloFritoEnsalada, calcularCostoPapasFritas, calcularCostoBaseSimple, calcularCostoBases, brand, empaques, empaquesPorReceta, onToggleEmpaque, calcularCostoEmpaques, selectedRecipe, setSelectedRecipe }) {
   const [showNewRecipeModal, setShowNewRecipeModal] = useState(false);
   const [showResumenCostos, setShowResumenCostos] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState(null);
