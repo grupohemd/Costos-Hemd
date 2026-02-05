@@ -1813,16 +1813,26 @@ export default function App() {
   };
 
   const handleUpdateIngredient = (updatedIngredient) => {
-    // Obtener el ingrediente anterior para ver si cambió el nombre
+    // Obtener el ingrediente anterior para ver si cambió el nombre o precio
     const oldIngredient = ingredients.find(ing => ing.id === updatedIngredient.id);
     const oldName = oldIngredient?.ingrediente || '';
     const newName = updatedIngredient.ingrediente;
     const ingredientId = updatedIngredient.id;
     
+    // Verificar si cambió el precio
+    const oldPrecio = oldIngredient?.precio || 0;
+    const newPrecio = updatedIngredient.precio || 0;
+    const precioCambio = oldPrecio !== newPrecio;
+    
     // Actualizar el ingrediente en el banco
     setIngredients(ingredients.map(ing => 
       ing.id === updatedIngredient.id 
-        ? { ...updatedIngredient, fechaActualizacion: new Date().toLocaleDateString('es-HN') }
+        ? { 
+            ...updatedIngredient, 
+            fechaActualizacion: new Date().toLocaleDateString('es-HN'),
+            // Solo actualizar fecha de precio si el precio cambió
+            fechaActualizacionPrecio: precioCambio ? new Date().toISOString() : (ing.fechaActualizacionPrecio || new Date().toISOString())
+          }
         : ing
     ));
     
@@ -4208,6 +4218,23 @@ function BancoIngredientes({ ingredients, onAdd, onDelete, onUpdate }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [soloPendientes, setSoloPendientes] = useState(false);
   const [soloPorValidar, setSoloPorValidar] = useState(false);
+  const [soloPorActualizar, setSoloPorActualizar] = useState(false);
+
+  // Función para verificar si un ingrediente necesita actualización de precio (más de 2 meses)
+  const necesitaActualizacion = (ing) => {
+    if (!ing.fechaActualizacionPrecio) return true; // Si no tiene fecha, necesita actualización
+    const fechaActualizacion = new Date(ing.fechaActualizacionPrecio);
+    const ahora = new Date();
+    const dosMesesAtras = new Date(ahora.getFullYear(), ahora.getMonth() - 2, ahora.getDate());
+    return fechaActualizacion < dosMesesAtras;
+  };
+
+  // Formatear fecha para mostrar
+  const formatearFecha = (fechaISO) => {
+    if (!fechaISO) return 'Sin registro';
+    const fecha = new Date(fechaISO);
+    return fecha.toLocaleDateString('es-HN', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
 
   // Contar pendientes (sin precio/peso)
   let totalPendientes = 0;
@@ -4225,6 +4252,15 @@ function BancoIngredientes({ ingredients, onAdd, onDelete, onUpdate }) {
     }
   }
 
+  // Contar ingredientes por actualizar (precio desactualizado +2 meses)
+  let totalPorActualizar = 0;
+  for (let i = 0; i < ingredients.length; i++) {
+    // Solo contar los que tienen precio (no los pendientes)
+    if (ingredients[i].precio && necesitaActualizacion(ingredients[i])) {
+      totalPorActualizar++;
+    }
+  }
+
   // Filtrar SOLO por la columna "Nombre Ingrediente" (campo: ingrediente)
   const listaVisible = [];
   const busqueda = searchTerm.trim().toLowerCase();
@@ -4236,6 +4272,7 @@ function BancoIngredientes({ ingredients, onAdd, onDelete, onUpdate }) {
     const nombreIngrediente = ing.ingrediente.toLowerCase();
     const esPendiente = !ing.pesoCompra || !ing.precio;
     const esPorValidar = ing.pendienteValidacion === true;
+    const esPorActualizar = ing.precio && necesitaActualizacion(ing);
     
     // Filtro por búsqueda
     if (busqueda !== '' && !nombreIngrediente.includes(busqueda)) {
@@ -4249,6 +4286,11 @@ function BancoIngredientes({ ingredients, onAdd, onDelete, onUpdate }) {
 
     // Filtro por pendientes de validación
     if (soloPorValidar && !esPorValidar) {
+      continue;
+    }
+
+    // Filtro por precio desactualizado
+    if (soloPorActualizar && !esPorActualizar) {
       continue;
     }
     
@@ -4318,10 +4360,26 @@ function BancoIngredientes({ ingredients, onAdd, onDelete, onUpdate }) {
             Por validar ({totalPorValidar})
           </button>
         )}
+
+        {totalPorActualizar > 0 && (
+          <button
+            onClick={() => setSoloPorActualizar(!soloPorActualizar)}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
+              soloPorActualizar 
+                ? 'bg-amber-50 text-amber-700 border-amber-300' 
+                : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Por actualizar ({totalPorActualizar})
+          </button>
+        )}
         
-        {(searchTerm || soloPendientes || soloPorValidar) && (
+        {(searchTerm || soloPendientes || soloPorValidar || soloPorActualizar) && (
           <button 
-            onClick={() => { setSearchTerm(''); setSoloPendientes(false); setSoloPorValidar(false); }} 
+            onClick={() => { setSearchTerm(''); setSoloPendientes(false); setSoloPorValidar(false); setSoloPorActualizar(false); }} 
             className="px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
           >
             Limpiar filtros
@@ -4330,7 +4388,7 @@ function BancoIngredientes({ ingredients, onAdd, onDelete, onUpdate }) {
       </div>
 
       {/* TABLA */}
-      <div key={`tabla-${busqueda}-${listaVisible.length}-${soloPendientes}-${soloPorValidar}`} className="bg-white border rounded-xl overflow-hidden">
+      <div key={`tabla-${busqueda}-${listaVisible.length}-${soloPendientes}-${soloPorValidar}-${soloPorActualizar}`} className="bg-white border rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b">
             <tr>
@@ -4344,15 +4402,16 @@ function BancoIngredientes({ ingredients, onAdd, onDelete, onUpdate }) {
             {listaVisible.length === 0 ? (
               <tr>
                 <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
-                  {searchTerm || soloPendientes || soloPorValidar ? 'No se encontraron ingredientes' : 'No hay ingredientes'}
+                  {searchTerm || soloPendientes || soloPorValidar || soloPorActualizar ? 'No se encontraron ingredientes' : 'No hay ingredientes'}
                 </td>
               </tr>
             ) : (
               listaVisible.map((ing, index) => {
                 const isPending = !ing.pesoCompra || !ing.precio;
                 const isPorValidar = ing.pendienteValidacion === true;
+                const isPorActualizar = ing.precio && necesitaActualizacion(ing);
                 return (
-                  <tr key={`${ing.id}-${index}`} className={isPorValidar ? 'bg-yellow-50/50' : isPending ? 'bg-red-50/50' : 'hover:bg-gray-50'}>
+                  <tr key={`${ing.id}-${index}`} className={isPorValidar ? 'bg-yellow-50/50' : isPending ? 'bg-red-50/50' : isPorActualizar ? 'bg-amber-50/30' : 'hover:bg-gray-50'}>
                     <td className="px-4 py-3">
                       <span className="font-medium text-gray-900">{ing.ingrediente}</span>
                       {isPending && <span className="ml-2 px-1.5 py-0.5 bg-red-100 text-red-600 rounded text-xs">Pendiente</span>}
@@ -4414,6 +4473,21 @@ function BancoIngredientes({ ingredients, onAdd, onDelete, onUpdate }) {
               <p><span className="text-gray-500">Grupo:</span> {viewingIngredient.grupo || '—'}</p>
               <p><span className="text-gray-500">Marca:</span> {viewingIngredient.marca || '—'}</p>
               <p><span className="text-gray-500">Proveedor:</span> {viewingIngredient.proveedor || '—'}</p>
+              <div className="pt-2 mt-2 border-t border-gray-100">
+                <p className="flex items-center gap-2">
+                  <span className="text-gray-500">Última actualización precio:</span>
+                  {viewingIngredient.fechaActualizacionPrecio ? (
+                    <span className={necesitaActualizacion(viewingIngredient) ? 'text-amber-600 font-medium' : 'text-gray-700'}>
+                      {new Date(viewingIngredient.fechaActualizacionPrecio).toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                      {necesitaActualizacion(viewingIngredient) && (
+                        <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">Desactualizado</span>
+                      )}
+                    </span>
+                  ) : (
+                    <span className="text-amber-600">Sin registro</span>
+                  )}
+                </p>
+              </div>
             </div>
             <button onClick={() => setViewingIngredient(null)} className="mt-4 w-full py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
               Cerrar
@@ -4515,6 +4589,14 @@ function IngredientModal({ ingredient, ingredients, onClose, onSave }) {
       }
     }
 
+    // Detectar si el precio cambió
+    const precioCambio = isEditing && 
+      formData.precio && 
+      parseFloat(formData.precio) !== (ingredient?.precio || 0);
+    
+    // Fecha actual en formato ISO
+    const fechaActual = new Date().toISOString();
+
     onSave({
       ...ingredient,
       ...formData,
@@ -4523,6 +4605,10 @@ function IngredientModal({ ingredient, ingredients, onClose, onSave }) {
       precio: formData.precio ? parseFloat(formData.precio) : null,
       merma: formData.merma ? parseFloat(formData.merma) : 0,
       pendienteValidacion: false, // Marcar como validado al guardar
+      // Actualizar fecha si: es nuevo con precio, o si el precio cambió
+      fechaActualizacionPrecio: (precioCambio || (!isEditing && formData.precio)) 
+        ? fechaActual 
+        : (ingredient?.fechaActualizacionPrecio || null),
     });
   };
 
@@ -4757,6 +4843,18 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, onDupl
   // Calcular costo total de una sub-receta (siempre usa valores del banco)
   const calcularCostoSubReceta = (subReceta) => {
     const costoTotal = subReceta.ingredientes.reduce((sum, ing) => {
+      // Si es ingrediente manual, usar los valores manuales
+      if (ing.esManual) {
+        const pesoCompra = parseFloat(ing.pesoCompraManual) || 0;
+        const precio = parseFloat(ing.precioManual) || 0;
+        const peso = parseFloat(ing.peso) || 0;
+        if (pesoCompra > 0 && precio > 0 && peso > 0) {
+          return sum + (peso / pesoCompra) * precio;
+        }
+        return sum;
+      }
+      
+      // Si no es manual, usar el banco
       const bancoIng = getIngredientFromBank(ing.ingredienteId, ing.ingredienteNombre);
       if (bancoIng && bancoIng.pesoCompra && bancoIng.precio && ing.peso) {
         const merma = parseFloat(bancoIng.merma) || 0;
@@ -5068,13 +5166,13 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, onDupl
                     <div className="bg-gray-50 rounded-lg p-3">
                       <p className="text-gray-500 text-xs mb-1">Margen Contribución</p>
                       <p className={`font-semibold ${precioVenta > 0 ? (margenContribucion >= 0 ? 'text-green-600' : 'text-red-600') : 'text-gray-400'}`}>
-                        {precioVenta > 0 ? `L${margenContribucion.toFixed(2)}` : '-'}
+                        {precioVenta > 0 ? `L${margenContribucion.toFixed(2)} (${((margenContribucion / precioVenta) * 100).toFixed(1)}%)` : '-'}
                       </p>
                     </div>
                     <div className="bg-gray-50 rounded-lg p-3">
                       <p className="text-gray-500 text-xs mb-1">Margen Real</p>
                       <p className={`font-semibold ${precioVenta > 0 ? (margenReal >= 0 ? 'text-green-600' : 'text-red-600') : 'text-gray-400'}`}>
-                        {precioVenta > 0 ? `L${margenReal.toFixed(2)}` : '-'}
+                        {precioVenta > 0 ? `L${margenReal.toFixed(2)} (${((margenReal / precioVenta) * 100).toFixed(1)}%)` : '-'}
                       </p>
                     </div>
                   </div>
@@ -5317,7 +5415,7 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, onDupl
                         precioVenta === 0 ? 'text-gray-400' :
                         margenReal >= 0 ? 'text-green-600' : 'text-red-600'
                       }`}>
-                        {precioVenta > 0 ? `L${margenReal.toFixed(2)}` : '-'}
+                        {precioVenta > 0 ? `L${margenReal.toFixed(2)} (${((margenReal / precioVenta) * 100).toFixed(1)}%)` : '-'}
                       </td>
                     </tr>
                   ))}
@@ -5769,7 +5867,11 @@ function SubRecetaModal({ subReceta, ingredients, onClose, onSave }) {
       id: ing.id,
       ingredienteId: ing.ingredienteId || null,
       ingredienteNombre: ing.ingredienteNombre,
-      peso: ing.peso
+      peso: ing.peso,
+      // Campos para ingredientes manuales
+      esManual: ing.esManual || false,
+      pesoCompraManual: ing.pesoCompraManual || '',
+      precioManual: ing.precioManual || ''
     })) || []
   );
   const [pesoReceta, setPesoReceta] = useState(subReceta?.pesoReceta || '');
@@ -5783,7 +5885,10 @@ function SubRecetaModal({ subReceta, ingredients, onClose, onSave }) {
         id: ing.id,
         ingredienteId: ing.ingredienteId || null,
         ingredienteNombre: ing.ingredienteNombre,
-        peso: ing.peso
+        peso: ing.peso,
+        esManual: ing.esManual || false,
+        pesoCompraManual: ing.pesoCompraManual || '',
+        precioManual: ing.precioManual || ''
       })) || []
     );
     setPesoReceta(subReceta?.pesoReceta || '');
@@ -5817,8 +5922,19 @@ function SubRecetaModal({ subReceta, ingredients, onClose, onSave }) {
       id: 'i' + Date.now(),
       ingredienteId: null,
       ingredienteNombre: '',
-      peso: ''
+      peso: '',
+      esManual: false,
+      pesoCompraManual: '',
+      precioManual: ''
     }]);
+  };
+
+  // Convertir ingrediente a manual
+  const handleConvertirAManual = (index) => {
+    const updated = [...ingredientesReceta];
+    updated[index].esManual = true;
+    updated[index].ingredienteId = null;
+    setIngredientesReceta(updated);
   };
 
   const handleUpdateIngrediente = (index, field, value) => {
@@ -5839,8 +5955,20 @@ function SubRecetaModal({ subReceta, ingredients, onClose, onSave }) {
     setIngredientesReceta(ingredientesReceta.filter((_, i) => i !== index));
   };
 
-  // Calcular costo usando valores del banco
+  // Calcular costo usando valores del banco o manuales
   const calcularCostoIngrediente = (ing) => {
+    // Si es manual, usar los valores manuales
+    if (ing.esManual) {
+      const pesoCompra = parseFloat(ing.pesoCompraManual) || 0;
+      const precio = parseFloat(ing.precioManual) || 0;
+      const peso = parseFloat(ing.peso) || 0;
+      if (pesoCompra > 0 && precio > 0 && peso > 0) {
+        return (peso / pesoCompra) * precio;
+      }
+      return 0;
+    }
+    
+    // Si no es manual, usar el banco
     const bancoIng = getIngredientFromBank(ing.ingredienteId, ing.ingredienteNombre);
     if (bancoIng && bancoIng.pesoCompra && bancoIng.precio && ing.peso) {
       const merma = parseFloat(bancoIng.merma) || 0;
@@ -5867,9 +5995,13 @@ function SubRecetaModal({ subReceta, ingredients, onClose, onSave }) {
           const bancoIng = getIngredientFromBank(ing.ingredienteId, ing.ingredienteNombre);
           return {
             id: ing.id,
-            ingredienteId: ing.ingredienteId || (bancoIng ? bancoIng.id : null),
-            ingredienteNombre: bancoIng ? bancoIng.ingrediente : ing.ingredienteNombre,
-            peso: parseFloat(ing.peso) || 0
+            ingredienteId: ing.esManual ? null : (ing.ingredienteId || (bancoIng ? bancoIng.id : null)),
+            ingredienteNombre: ing.esManual ? ing.ingredienteNombre : (bancoIng ? bancoIng.ingrediente : ing.ingredienteNombre),
+            peso: parseFloat(ing.peso) || 0,
+            // Campos manuales
+            esManual: ing.esManual || false,
+            pesoCompraManual: ing.esManual ? (parseFloat(ing.pesoCompraManual) || 0) : null,
+            precioManual: ing.esManual ? (parseFloat(ing.precioManual) || 0) : null
           };
         }),
         pesoReceta: parseFloat(pesoReceta) || 0,
@@ -5916,15 +6048,6 @@ function SubRecetaModal({ subReceta, ingredients, onClose, onSave }) {
           <div className="mb-6">
             <div className="flex justify-between items-center mb-3">
               <label className="text-sm font-medium text-gray-700">Ingredientes</label>
-              <button
-                onClick={handleAddIngrediente}
-                className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
-                Agregar ingrediente
-              </button>
             </div>
 
             <div className="border border-gray-200 rounded-lg overflow-hidden">
@@ -5943,22 +6066,43 @@ function SubRecetaModal({ subReceta, ingredients, onClose, onSave }) {
                 <tbody className="divide-y divide-gray-100">
                   {ingredientesReceta.map((ing, index) => {
                     const bancoIng = getIngredientFromBank(ing.ingredienteId, ing.ingredienteNombre);
-                    const nombreMostrar = bancoIng ? bancoIng.ingrediente : ing.ingredienteNombre;
-                    const noEncontrado = (ing.ingredienteNombre || ing.ingredienteId) && !bancoIng;
+                    const nombreMostrar = ing.esManual ? ing.ingredienteNombre : (bancoIng ? bancoIng.ingrediente : ing.ingredienteNombre);
+                    const noEncontrado = !ing.esManual && (ing.ingredienteNombre || ing.ingredienteId) && !bancoIng && ing.ingredienteNombre.trim() !== '';
+                    
                     return (
-                      <tr key={ing.id} className={noEncontrado ? 'bg-red-50' : ''}>
-                        <td className="px-3 py-2">
-                          <IngredienteAutocomplete
-                            value={nombreMostrar}
-                            ingredients={ingredients}
-                            onChange={(value) => handleUpdateIngrediente(index, 'ingredienteNombre', value)}
-                            onSelect={(selectedIng) => handleSelectIngrediente(index, selectedIng)}
-                          />
-                          {noEncontrado && (
-                            <p className="text-xs text-red-600 mt-1">No encontrado en banco</p>
+                      <tr key={ing.id} className={ing.esManual ? 'bg-blue-50/50' : ''}>
+                        <td className="px-3 py-2 align-top">
+                          {ing.esManual ? (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={ing.ingredienteNombre}
+                                onChange={(e) => handleUpdateIngrediente(index, 'ingredienteNombre', e.target.value)}
+                                className="flex-1 px-2 py-1.5 border border-blue-300 rounded text-sm bg-white focus:outline-none focus:border-blue-400"
+                                placeholder="Nombre del ingrediente"
+                              />
+                              <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded whitespace-nowrap">Manual</span>
+                            </div>
+                          ) : (
+                            <div>
+                              <IngredienteAutocomplete
+                                value={nombreMostrar}
+                                ingredients={ingredients}
+                                onChange={(value) => handleUpdateIngrediente(index, 'ingredienteNombre', value)}
+                                onSelect={(selectedIng) => handleSelectIngrediente(index, selectedIng)}
+                              />
+                              {noEncontrado && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  No encontrado: <button
+                                    onClick={() => handleConvertirAManual(index)}
+                                    className="text-blue-600 hover:text-blue-800 hover:underline"
+                                  >agregar manual</button>
+                                </p>
+                              )}
+                            </div>
                           )}
                         </td>
-                        <td className="px-3 py-2">
+                        <td className="px-3 py-2 align-top">
                           <input
                             type="number"
                             value={ing.peso}
@@ -5967,11 +6111,23 @@ function SubRecetaModal({ subReceta, ingredients, onClose, onSave }) {
                             placeholder="0"
                           />
                         </td>
-                        <td className="px-3 py-2 text-right text-gray-600">
-                          {bancoIng?.pesoCompra ? `${bancoIng.pesoCompra}g` : '-'}
+                        <td className="px-3 py-2 align-top text-right">
+                          {ing.esManual ? (
+                            <input
+                              type="number"
+                              value={ing.pesoCompraManual}
+                              onChange={(e) => handleUpdateIngrediente(index, 'pesoCompraManual', e.target.value)}
+                              className="w-full px-2 py-1.5 border border-blue-300 rounded text-sm text-right bg-white focus:outline-none focus:border-blue-400"
+                              placeholder="0"
+                            />
+                          ) : (
+                            <span className="text-gray-600">{bancoIng?.pesoCompra ? `${bancoIng.pesoCompra}g` : '-'}</span>
+                          )}
                         </td>
-                        <td className="px-3 py-2 text-right">
-                          {bancoIng?.merma > 0 ? (
+                        <td className="px-3 py-2 align-top text-right">
+                          {ing.esManual ? (
+                            <span className="text-gray-400 text-xs">N/A</span>
+                          ) : bancoIng?.merma > 0 ? (
                             <span className="inline-block px-2 py-1 bg-amber-50 text-amber-700 rounded text-xs font-medium">
                               {bancoIng.merma}%
                             </span>
@@ -5979,13 +6135,26 @@ function SubRecetaModal({ subReceta, ingredients, onClose, onSave }) {
                             <span className="text-gray-400 text-xs">0%</span>
                           )}
                         </td>
-                        <td className="px-3 py-2 text-right text-gray-600">
-                          {bancoIng?.precio ? `L${bancoIng.precio.toFixed(2)}` : '-'}
+                        <td className="px-3 py-2 align-top text-right">
+                          {ing.esManual ? (
+                            <div className="flex items-center justify-end">
+                              <span className="text-gray-400 text-sm mr-1">L</span>
+                              <input
+                                type="number"
+                                value={ing.precioManual}
+                                onChange={(e) => handleUpdateIngrediente(index, 'precioManual', e.target.value)}
+                                className="w-20 px-2 py-1.5 border border-blue-300 rounded text-sm text-right bg-white focus:outline-none focus:border-blue-400"
+                                placeholder="0.00"
+                              />
+                            </div>
+                          ) : (
+                            <span className="text-gray-600">{bancoIng?.precio ? `L${bancoIng.precio.toFixed(2)}` : '-'}</span>
+                          )}
                         </td>
-                        <td className="px-3 py-2 text-right font-medium text-gray-900">
+                        <td className="px-3 py-2 align-top text-right font-medium text-gray-900">
                           L{calcularCostoIngrediente(ing).toFixed(2)}
                         </td>
-                        <td className="px-2 py-2">
+                        <td className="px-2 py-2 align-top">
                           <button
                             onClick={() => handleRemoveIngrediente(index)}
                             className="p-1 text-gray-400 hover:text-red-600"
@@ -6017,6 +6186,17 @@ function SubRecetaModal({ subReceta, ingredients, onClose, onSave }) {
                 )}
               </table>
             </div>
+            
+            {/* Botón agregar ingrediente - abajo de la tabla */}
+            <button
+              onClick={handleAddIngrediente}
+              className="mt-3 w-full py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-dashed border-gray-300 rounded-lg flex items-center justify-center gap-2 transition-colors"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              Agregar ingrediente
+            </button>
           </div>
 
           {/* Peso receta y porción */}
