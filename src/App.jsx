@@ -1777,6 +1777,73 @@ export default function App() {
     setSelectedBrand(null);
   };
 
+  // ========== FUNCIONES DE BACKUP ==========
+  const handleExportData = () => {
+    const dataToExport = {
+      version: '1.0',
+      exportDate: new Date().toISOString(),
+      ingredients,
+      recetasPorMarca,
+      configCostosPorMarca,
+      basesRecetaPorMarca,
+      basesPorReceta,
+      empaquesPorMarca,
+      empaquesPorReceta,
+      deliveryPorReceta,
+      isvPorReceta,
+      precioVentaPorReceta,
+      brands
+    };
+    
+    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup-costos-hemd-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportData = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        
+        // Validar que el archivo tiene la estructura correcta
+        if (!data.ingredients || !data.recetasPorMarca) {
+          alert('El archivo no tiene el formato correcto de backup.');
+          return;
+        }
+        
+        // Restaurar todos los datos
+        if (data.ingredients) setIngredients(data.ingredients);
+        if (data.recetasPorMarca) setRecetasPorMarca(data.recetasPorMarca);
+        if (data.configCostosPorMarca) setConfigCostosPorMarca(data.configCostosPorMarca);
+        if (data.basesRecetaPorMarca) setBasesRecetaPorMarca(data.basesRecetaPorMarca);
+        if (data.basesPorReceta) setBasesPorReceta(data.basesPorReceta);
+        if (data.empaquesPorMarca) setEmpaquesPorMarca(data.empaquesPorMarca);
+        if (data.empaquesPorReceta) setEmpaquesPorReceta(data.empaquesPorReceta);
+        if (data.deliveryPorReceta) setDeliveryPorReceta(data.deliveryPorReceta);
+        if (data.isvPorReceta) setIsvPorReceta(data.isvPorReceta);
+        if (data.precioVentaPorReceta) setPrecioVentaPorReceta(data.precioVentaPorReceta);
+        if (data.brands) setBrands(data.brands);
+        
+        alert('✓ Datos restaurados correctamente desde el backup.');
+      } catch (error) {
+        alert('Error al leer el archivo. Asegúrate de que sea un archivo JSON válido.');
+      }
+    };
+    reader.readAsText(file);
+    // Limpiar el input para permitir cargar el mismo archivo de nuevo
+    event.target.value = '';
+  };
+
   const handleSelectBrand = (brand) => {
     setSelectedBrand(brand);
     setCurrentView('dashboard');
@@ -2254,6 +2321,8 @@ export default function App() {
               onAddBrand={handleAddBrand}
               onLogout={handleLogout}
               userName={currentUser?.name}
+              onExportData={handleExportData}
+              onImportData={handleImportData}
             />
           )}
           {currentView === 'dashboard' && (
@@ -2394,7 +2463,7 @@ function LoginScreen({ onLogin }) {
 // ============================================
 // PANTALLA DE SELECCIÓN DE MARCA
 // ============================================
-function BrandSelectScreen({ brands, onSelectBrand, onAddBrand, onLogout, userName }) {
+function BrandSelectScreen({ brands, onSelectBrand, onAddBrand, onLogout, userName, onExportData, onImportData }) {
   const [showAddModal, setShowAddModal] = useState(false);
 
   return (
@@ -2451,6 +2520,37 @@ function BrandSelectScreen({ brands, onSelectBrand, onAddBrand, onLogout, userNa
               </div>
               <span className="text-base text-gray-500">Agregar marca</span>
             </button>
+          </div>
+
+          {/* Sección de Backup */}
+          <div className="mt-10 pt-8 border-t border-gray-200">
+            <h3 className="text-sm font-medium text-gray-700 mb-4">Copia de seguridad</h3>
+            <div className="flex gap-3">
+              <button
+                onClick={onExportData}
+                className="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                </svg>
+                Exportar datos
+              </button>
+              <label className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors cursor-pointer">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                </svg>
+                Importar datos
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={onImportData}
+                  className="hidden"
+                />
+              </label>
+            </div>
+            <p className="text-xs text-gray-500 mt-3">
+              Exporta tus datos regularmente para tener una copia de seguridad.
+            </p>
           </div>
         </div>
       </main>
