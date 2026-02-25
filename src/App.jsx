@@ -1973,21 +1973,25 @@ export default function App() {
 
   const handleDuplicateReceta = (recetaOriginal) => {
     const newId = Date.now().toString();
+    let counter = 0;
     
-    // Crear copia de la receta con nuevo ID
+    // Crear copia de la receta con nuevo ID y IDs únicos para sub-recetas e ingredientes
     const recetaDuplicada = {
       ...recetaOriginal,
       id: newId,
       nombre: `${recetaOriginal.nombre} (copia)`,
       fechaActualizacion: new Date().toLocaleDateString('es-HN'),
-      subRecetas: recetaOriginal.subRecetas.map(sr => ({
-        ...sr,
-        id: 'sr' + Date.now() + Math.random().toString(36).substr(2, 9),
-        ingredientes: sr.ingredientes.map(ing => ({
-          ...ing,
-          id: 'i' + Date.now() + Math.random().toString(36).substr(2, 9)
-        }))
-      }))
+      subRecetas: recetaOriginal.subRecetas.map(sr => {
+        counter++;
+        return {
+          ...sr,
+          id: 'sr' + newId + counter,
+          ingredientes: sr.ingredientes.map((ing, ingIndex) => ({
+            ...ing,
+            id: 'i' + newId + counter + ingIndex
+          }))
+        };
+      })
     };
     
     // Insertar después de la original
@@ -2261,13 +2265,25 @@ export default function App() {
         costoTotal += calcularCostoPapasFritas(marcaId);
       }
     } else {
-      // Para otras marcas (Green Memo, etc.) - estructura simple
+      // Para otras marcas (Green Memo, etc.) - estructura simple (excluyendo custom_)
       Object.keys(basesActivas).forEach(baseKey => {
-        if (basesActivas[baseKey] && basesReceta[baseKey]) {
+        if (!baseKey.startsWith('custom_') && basesActivas[baseKey] && basesReceta[baseKey]) {
           costoTotal += calcularCostoBaseSimple(basesReceta[baseKey]);
         }
       });
     }
+    
+    // Bases personalizadas (todas las marcas)
+    Object.keys(basesActivas).forEach(baseKey => {
+      if (baseKey.startsWith('custom_') && basesActivas[baseKey] && basesReceta[baseKey]) {
+        const base = basesReceta[baseKey];
+        const costoReceta = base.ingredientes.reduce((sum, ing) => {
+          return sum + (ing.pesoCompra > 0 ? (ing.pesoUsado / ing.pesoCompra) * ing.precioCompra : 0);
+        }, 0);
+        const costoPorcion = base.pesoReceta > 0 ? (costoReceta / base.pesoReceta) * base.pesoPorcion : 0;
+        costoTotal += costoPorcion;
+      }
+    });
     
     return costoTotal;
   };
@@ -2848,6 +2864,7 @@ function DashboardScreen({
             calcularCostoPapasFritas={calcularCostoPapasFritas}
             calcularCostoBaseSimple={calcularCostoBaseSimple}
             brand={brand}
+            ingredients={ingredients}
           />
         )}
         {currentModule === 'empaques' && (
@@ -3375,10 +3392,13 @@ function ConfiguracionCostos({ configCostos, onUpdateConfigCostos, calcularTotal
 // ============================================
 // BASES DE RECETA
 // ============================================
-function BasesRecetaModule({ basesReceta, onUpdateBasesReceta, calcularCostoPolloFrito, calcularCostoPolloFritoEnsalada, calcularCostoPapasFritas, calcularCostoBaseSimple, brand }) {
+function BasesRecetaModule({ basesReceta, onUpdateBasesReceta, calcularCostoPolloFrito, calcularCostoPolloFritoEnsalada, calcularCostoPapasFritas, calcularCostoBaseSimple, brand, ingredients }) {
   const [editMode, setEditMode] = useState(false);
   const [tempBases, setTempBases] = useState(basesReceta);
   const [expandedBase, setExpandedBase] = useState(null); // null, 'pollo', 'polloEnsalada', 'papas', o cualquier baseKey
+  const [showAddBaseModal, setShowAddBaseModal] = useState(false);
+  const [editingBase, setEditingBase] = useState(null);
+  const [deleteConfirmBase, setDeleteConfirmBase] = useState(null);
 
   // Detectar si es Soul Chkn (marca '1') o Green Memo (marca '2')
   const esSoulChkn = brand?.id === '1';
@@ -3390,11 +3410,56 @@ function BasesRecetaModule({ basesReceta, onUpdateBasesReceta, calcularCostoPoll
   const tienePapas = basesReceta?.papasFritas !== null && basesReceta?.papasFritas !== undefined;
   const tieneAlgunaBaseSoulChkn = tienePolloFrito || tienePolloEnsalada || tienePapas;
 
-  // Obtener bases de Green Memo (con ingredientes o subRecetas)
-  const basesGreenMemo = esGreenMemo ? Object.entries(basesReceta || {}).filter(([key, val]) => val !== null && (val?.ingredientes || val?.subRecetas)) : [];
+  // Obtener bases personalizadas (cualquier marca) - las que tienen ingredientes o subRecetas y empiezan con 'custom_'
+  const basesPersonalizadas = Object.entries(basesReceta || {}).filter(([key, val]) => 
+    key.startsWith('custom_') && val !== null && (val?.ingredientes || val?.subRecetas)
+  );
+  const tieneBasesPersonalizadas = basesPersonalizadas.length > 0;
+
+  // Obtener bases de Green Memo (con ingredientes o subRecetas, excluyendo las custom_)
+  const basesGreenMemo = esGreenMemo ? Object.entries(basesReceta || {}).filter(([key, val]) => 
+    !key.startsWith('custom_') && val !== null && (val?.ingredientes || val?.subRecetas)
+  ) : [];
   const tieneAlgunaBaseGreenMemo = basesGreenMemo.length > 0;
   
-  const tieneAlgunaBase = esSoulChkn ? tieneAlgunaBaseSoulChkn : tieneAlgunaBaseGreenMemo;
+  const tieneAlgunaBase = (esSoulChkn ? tieneAlgunaBaseSoulChkn : tieneAlgunaBaseGreenMemo) || tieneBasesPersonalizadas;
+
+  // Función para agregar base personalizada
+  const handleAddBase = (baseData) => {
+    const baseKey = 'custom_' + Date.now();
+    const nuevaBase = {
+      nombre: baseData.nombre,
+      ingredientes: baseData.ingredientes,
+      pesoReceta: baseData.pesoReceta,
+      pesoPorcion: baseData.pesoPorcion
+    };
+    onUpdateBasesReceta({
+      ...basesReceta,
+      [baseKey]: nuevaBase
+    });
+    setShowAddBaseModal(false);
+  };
+
+  // Función para editar base personalizada
+  const handleUpdateBase = (baseKey, baseData) => {
+    onUpdateBasesReceta({
+      ...basesReceta,
+      [baseKey]: {
+        nombre: baseData.nombre,
+        ingredientes: baseData.ingredientes,
+        pesoReceta: baseData.pesoReceta,
+        pesoPorcion: baseData.pesoPorcion
+      }
+    });
+    setEditingBase(null);
+  };
+
+  // Función para eliminar base personalizada
+  const handleDeleteBase = (baseKey) => {
+    const { [baseKey]: removed, ...rest } = basesReceta;
+    onUpdateBasesReceta(rest);
+    setDeleteConfirmBase(null);
+  };
 
   const toggleBase = (base) => {
     setExpandedBase(expandedBase === base ? null : base);
@@ -3519,6 +3584,19 @@ function BasesRecetaModule({ basesReceta, onUpdateBasesReceta, calcularCostoPoll
             </button>
           </div>
         )}
+      </div>
+
+      {/* Botón agregar base personalizada */}
+      <div className="mb-6">
+        <button
+          onClick={() => setShowAddBaseModal(true)}
+          className="flex items-center gap-3 w-full p-4 bg-gray-50 border border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-gray-400 hover:bg-gray-100 transition-colors"
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Agregar base personalizada
+        </button>
       </div>
 
       {/* Mensaje cuando no hay bases configuradas */}
@@ -4054,6 +4132,407 @@ function BasesRecetaModule({ basesReceta, onUpdateBasesReceta, calcularCostoPoll
         </p>
       </div>
       )}
+
+      {/* ====== BASES PERSONALIZADAS ====== */}
+      {tieneBasesPersonalizadas && (
+        <div className="mt-6">
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Bases Personalizadas</h3>
+          {basesPersonalizadas.map(([baseKey, base]) => {
+            // Calcular costo de la base
+            const costoReceta = base.ingredientes.reduce((sum, ing) => {
+              return sum + (ing.pesoCompra > 0 ? (ing.pesoUsado / ing.pesoCompra) * ing.precioCompra : 0);
+            }, 0);
+            const costoPorcion = base.pesoReceta > 0 ? (costoReceta / base.pesoReceta) * base.pesoPorcion : 0;
+
+            return (
+              <div key={baseKey} className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-4">
+                <div className="px-5 py-4 bg-gray-50 flex items-center justify-between">
+                  <button 
+                    onClick={() => toggleBase(baseKey)}
+                    className="flex items-center gap-3 flex-1"
+                  >
+                    <svg 
+                      className={`w-5 h-5 text-gray-500 transition-transform ${expandedBase === baseKey ? 'rotate-90' : ''}`} 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2"
+                    >
+                      <path d="M9 18l6-6-6-6" />
+                    </svg>
+                    <h3 className="text-base font-semibold text-gray-900">{base.nombre}</h3>
+                    <span className="px-2 py-0.5 text-xs bg-purple-100 text-purple-700 rounded">Personalizada</span>
+                  </button>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-bold text-gray-700">L{costoPorcion.toFixed(2)} / porción</span>
+                    <button
+                      onClick={() => setEditingBase({ key: baseKey, ...base })}
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      title="Editar"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => setDeleteConfirmBase(baseKey)}
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                      title="Eliminar"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                {expandedBase === baseKey && (
+                  <div className="p-5">
+                    <div className="grid grid-cols-3 gap-4 mb-4 pb-4 border-b border-gray-100">
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">Peso Receta</label>
+                        <p className="text-sm font-medium text-gray-900">{base.pesoReceta}g</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">Peso Porción</label>
+                        <p className="text-sm font-medium text-gray-900">{base.pesoPorcion}g</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">Porciones por Receta</label>
+                        <p className="text-sm font-medium text-gray-900">{(base.pesoReceta / base.pesoPorcion).toFixed(1)}</p>
+                      </div>
+                    </div>
+                    
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-100">
+                          <th className="text-left py-2 px-3 font-medium text-gray-600">Ingrediente</th>
+                          <th className="text-right py-2 px-3 font-medium text-gray-600">Peso</th>
+                          <th className="text-right py-2 px-3 font-medium text-gray-600">Peso Compra</th>
+                          <th className="text-right py-2 px-3 font-medium text-gray-600">Precio</th>
+                          <th className="text-right py-2 px-3 font-medium text-gray-600">Costo</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {base.ingredientes.map((ing, idx) => {
+                          const costoIng = ing.pesoCompra > 0 ? (ing.pesoUsado / ing.pesoCompra) * ing.precioCompra : 0;
+                          return (
+                            <tr key={idx} className="border-b border-gray-50">
+                              <td className="py-2 px-3 text-gray-900">{ing.nombre}</td>
+                              <td className="py-2 px-3 text-right text-gray-600">{ing.pesoUsado}g</td>
+                              <td className="py-2 px-3 text-right text-gray-600">{ing.pesoCompra}g</td>
+                              <td className="py-2 px-3 text-right text-gray-600">L{ing.precioCompra.toFixed(2)}</td>
+                              <td className="py-2 px-3 text-right font-medium text-gray-900">L{costoIng.toFixed(2)}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      <tfoot>
+                        <tr className="bg-gray-50">
+                          <td colSpan="4" className="py-2 px-3 text-right font-medium text-gray-700">Costo Total Receta:</td>
+                          <td className="py-2 px-3 text-right font-bold text-gray-900">L{costoReceta.toFixed(2)}</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Modal agregar base personalizada */}
+      {showAddBaseModal && (
+        <BasePersonalizadaModal
+          ingredients={ingredients}
+          onClose={() => setShowAddBaseModal(false)}
+          onSave={handleAddBase}
+        />
+      )}
+
+      {/* Modal editar base personalizada */}
+      {editingBase && (
+        <BasePersonalizadaModal
+          base={editingBase}
+          ingredients={ingredients}
+          onClose={() => setEditingBase(null)}
+          onSave={(data) => handleUpdateBase(editingBase.key, data)}
+        />
+      )}
+
+      {/* Modal confirmar eliminar base */}
+      {deleteConfirmBase && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setDeleteConfirmBase(null)}>
+          <div className="bg-white rounded-xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold mb-2">¿Eliminar base?</h3>
+            <p className="text-gray-600 mb-4">Esta acción no se puede deshacer.</p>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setDeleteConfirmBase(null)} className="px-4 py-2 border rounded-lg">Cancelar</button>
+              <button onClick={() => handleDeleteBase(deleteConfirmBase)} className="px-4 py-2 bg-red-600 text-white rounded-lg">Eliminar</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================
+// MODAL PARA BASE PERSONALIZADA
+// ============================================
+function BasePersonalizadaModal({ base, ingredients, onClose, onSave }) {
+  const isEditing = !!base;
+  const [nombre, setNombre] = useState(base?.nombre || '');
+  const [ingredientesBase, setIngredientesBase] = useState(
+    base?.ingredientes?.map(ing => ({
+      id: ing.id || 'ing_' + Date.now() + Math.random(),
+      nombre: ing.nombre,
+      pesoUsado: ing.pesoUsado || '',
+      pesoCompra: ing.pesoCompra || '',
+      precioCompra: ing.precioCompra || ''
+    })) || []
+  );
+  const [pesoReceta, setPesoReceta] = useState(base?.pesoReceta || '');
+  const [pesoPorcion, setPesoPorcion] = useState(base?.pesoPorcion || '');
+
+  const handleAddIngrediente = () => {
+    setIngredientesBase([...ingredientesBase, {
+      id: 'ing_' + Date.now() + Math.random(),
+      nombre: '',
+      pesoUsado: '',
+      pesoCompra: '',
+      precioCompra: ''
+    }]);
+  };
+
+  const handleUpdateIngrediente = (index, field, value) => {
+    const updated = [...ingredientesBase];
+    updated[index][field] = value;
+    setIngredientesBase(updated);
+  };
+
+  const handleSelectIngrediente = (index, selectedIngredient) => {
+    const updated = [...ingredientesBase];
+    updated[index].nombre = selectedIngredient.ingrediente;
+    updated[index].pesoCompra = selectedIngredient.pesoCompra || '';
+    updated[index].precioCompra = selectedIngredient.precio || '';
+    setIngredientesBase(updated);
+  };
+
+  const handleRemoveIngrediente = (index) => {
+    setIngredientesBase(ingredientesBase.filter((_, i) => i !== index));
+  };
+
+  const calcularCostoIngrediente = (ing) => {
+    const pesoUsado = parseFloat(ing.pesoUsado) || 0;
+    const pesoCompra = parseFloat(ing.pesoCompra) || 0;
+    const precioCompra = parseFloat(ing.precioCompra) || 0;
+    if (pesoCompra > 0 && precioCompra > 0 && pesoUsado > 0) {
+      return (pesoUsado / pesoCompra) * precioCompra;
+    }
+    return 0;
+  };
+
+  const costoTotal = ingredientesBase.reduce((sum, ing) => sum + calcularCostoIngrediente(ing), 0);
+  
+  const costoPorcion = pesoReceta && pesoPorcion 
+    ? (parseFloat(pesoPorcion) / parseFloat(pesoReceta)) * costoTotal 
+    : 0;
+
+  const handleSubmit = () => {
+    if (nombre.trim() && ingredientesBase.length > 0) {
+      onSave({
+        nombre: nombre.trim(),
+        ingredientes: ingredientesBase.map(ing => ({
+          id: ing.id,
+          nombre: ing.nombre,
+          pesoUsado: parseFloat(ing.pesoUsado) || 0,
+          pesoCompra: parseFloat(ing.pesoCompra) || 0,
+          precioCompra: parseFloat(ing.precioCompra) || 0
+        })),
+        pesoReceta: parseFloat(pesoReceta) || 0,
+        pesoPorcion: parseFloat(pesoPorcion) || 0
+      });
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-5 z-50" onClick={onClose}>
+      <div className="w-full max-w-4xl bg-white rounded-xl overflow-hidden max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">
+            {isEditing ? 'Editar base personalizada' : 'Nueva base personalizada'}
+          </h3>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600">
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6">
+          {/* Nombre de la base */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Nombre de la base</label>
+            <input
+              type="text"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+              placeholder="Ej: SALSA BLANCA, CHIMICHURRI..."
+            />
+          </div>
+
+          {/* Tabla de ingredientes */}
+          <div className="mb-6">
+            <label className="text-sm font-medium text-gray-700 mb-3 block">Ingredientes</label>
+
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="text-left px-3 py-2 font-medium text-gray-700">Ingrediente</th>
+                    <th className="text-right px-3 py-2 font-medium text-gray-700 w-24">Peso (g)</th>
+                    <th className="text-right px-3 py-2 font-medium text-gray-700 w-28">Peso compra</th>
+                    <th className="text-right px-3 py-2 font-medium text-gray-700 w-28">Precio compra</th>
+                    <th className="text-right px-3 py-2 font-medium text-gray-700 w-24">Costo</th>
+                    <th className="w-10"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {ingredientesBase.map((ing, index) => (
+                    <tr key={ing.id}>
+                      <td className="px-3 py-2">
+                        <IngredienteAutocomplete
+                          value={ing.nombre}
+                          ingredients={ingredients}
+                          onChange={(value) => handleUpdateIngrediente(index, 'nombre', value)}
+                          onSelect={(selectedIng) => handleSelectIngrediente(index, selectedIng)}
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="number"
+                          value={ing.pesoUsado}
+                          onChange={(e) => handleUpdateIngrediente(index, 'pesoUsado', e.target.value)}
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm text-right focus:outline-none focus:border-gray-400"
+                          placeholder="0"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="number"
+                          value={ing.pesoCompra}
+                          onChange={(e) => handleUpdateIngrediente(index, 'pesoCompra', e.target.value)}
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm text-right focus:outline-none focus:border-gray-400"
+                          placeholder="0"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="number"
+                          value={ing.precioCompra}
+                          onChange={(e) => handleUpdateIngrediente(index, 'precioCompra', e.target.value)}
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm text-right focus:outline-none focus:border-gray-400"
+                          placeholder="0.00"
+                        />
+                      </td>
+                      <td className="px-3 py-2 text-right font-medium text-gray-900">
+                        L{calcularCostoIngrediente(ing).toFixed(2)}
+                      </td>
+                      <td className="px-2 py-2">
+                        <button
+                          onClick={() => handleRemoveIngrediente(index)}
+                          className="p-1 text-gray-400 hover:text-red-600"
+                        >
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M18 6L6 18M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {ingredientesBase.length === 0 && (
+                    <tr>
+                      <td colSpan="6" className="px-3 py-8 text-center text-gray-500">
+                        Haz clic en "Agregar ingrediente" para comenzar
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+                {ingredientesBase.length > 0 && (
+                  <tfoot>
+                    <tr className="bg-gray-50 font-medium">
+                      <td colSpan="4" className="px-3 py-2 text-gray-700">TOTAL</td>
+                      <td className="px-3 py-2 text-right text-gray-900">L{costoTotal.toFixed(2)}</td>
+                      <td></td>
+                    </tr>
+                  </tfoot>
+                )}
+              </table>
+            </div>
+            
+            {/* Botón agregar ingrediente */}
+            <button
+              onClick={handleAddIngrediente}
+              className="mt-3 w-full py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-dashed border-gray-300 rounded-lg flex items-center justify-center gap-2 transition-colors"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              Agregar ingrediente
+            </button>
+          </div>
+
+          {/* Peso receta y porción */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700">Peso de la receta (g)</label>
+              <input
+                type="number"
+                value={pesoReceta}
+                onChange={(e) => setPesoReceta(e.target.value)}
+                className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+                placeholder="Suma total de pesos"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700">Peso por porción (g)</label>
+              <input
+                type="number"
+                value={pesoPorcion}
+                onChange={(e) => setPesoPorcion(e.target.value)}
+                className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+                placeholder="Cantidad usada en el plato"
+              />
+            </div>
+          </div>
+
+          {/* Costo por porción */}
+          {pesoReceta && pesoPorcion && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="text-green-700 font-medium">Costo por porción</span>
+                <span className="text-xl font-bold text-green-700">L{costoPorcion.toFixed(2)}</span>
+              </div>
+              <p className="text-sm text-green-600 mt-1">
+                ({pesoPorcion}g de {pesoReceta}g totales)
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-3 justify-end px-6 py-4 border-t border-gray-200 bg-gray-50">
+          <button onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+            Cancelar
+          </button>
+          <button onClick={handleSubmit} className="px-5 py-2.5 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800">
+            {isEditing ? 'Guardar cambios' : 'Crear base'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -5331,8 +5810,8 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, onDupl
                             </label>
                           </>
                         )}
-                        {/* Green Memo bases (y otras marcas con bases simples) */}
-                        {brand?.id !== '1' && Object.entries(basesReceta || {}).filter(([k, v]) => v?.ingredientes || v?.subRecetas).map(([baseKey, base]) => (
+                        {/* Green Memo bases (y otras marcas con bases simples, excluyendo custom_) */}
+                        {brand?.id !== '1' && Object.entries(basesReceta || {}).filter(([k, v]) => !k.startsWith('custom_') && (v?.ingredientes || v?.subRecetas)).map(([baseKey, base]) => (
                           <label key={baseKey} className="flex items-center gap-2 cursor-pointer">
                             <input
                               type="checkbox"
@@ -5343,6 +5822,24 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, onDupl
                             <span className="text-sm text-gray-700">{base.nombre} <span className="text-gray-400">(L{calcularCostoBaseSimple(base).toFixed(2)})</span></span>
                           </label>
                         ))}
+                        {/* Bases personalizadas (todas las marcas) */}
+                        {Object.entries(basesReceta || {}).filter(([k, v]) => k.startsWith('custom_') && (v?.ingredientes || v?.subRecetas)).map(([baseKey, base]) => {
+                          const costoBase = base.ingredientes.reduce((sum, ing) => {
+                            return sum + (ing.pesoCompra > 0 ? (ing.pesoUsado / ing.pesoCompra) * ing.precioCompra : 0);
+                          }, 0);
+                          const costoPorcion = base.pesoReceta > 0 ? (costoBase / base.pesoReceta) * base.pesoPorcion : 0;
+                          return (
+                            <label key={baseKey} className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={basesActivas[baseKey] || false}
+                                onChange={() => onToggleBaseReceta(recipe.id, baseKey)}
+                                className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                              />
+                              <span className="text-sm text-gray-700">{base.nombre} <span className="text-xs text-purple-500">(personalizada)</span> <span className="text-gray-400">(L{costoPorcion.toFixed(2)})</span></span>
+                            </label>
+                          );
+                        })}
                       </div>
 
                       {/* Empaques / Materiales */}
