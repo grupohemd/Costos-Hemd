@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir C:\\\\Users\\\\CAMILO\\\\costos-hemd\\\\costos-hemd-firebase *)",
+      "Bash(dir C:\\\\Users\\\\CAMILO\\\\costos-hemd\\\\costos-hemd-firebase\\\\src *)",
+      "Bash(powershell *)",
+      "Bash(npm run *)",
+      "Bash(netlify *)",
+      "PowerShell(netlify *)",
+      "PowerShell(npx netlify status)",
+      "PowerShell(npx netlify deploy --prod --dir=dist --site=da52c140-e5a2-414f-a0dd-79d70b686361)",
+      "Bash(npx netlify *)",
+      "Bash(curl -s \"https://regal-mermaid-36e679.netlify.app/assets/index-DHm37cxZ.js\" -o /tmp/deployed.js)",
+      "Read(//tmp/**)",
+      "Bash(node audit.mjs)",
+      "Bash(curl *)",
+      "Bash(node verify-impact.mjs)",
+      "Bash(node verify-pvp.mjs)",
+      "Bash(node verify-filtros-modal.mjs)",
+      "Bash(npm install *)",
+      "Bash(node *)"
+    ]
+  }
+}
