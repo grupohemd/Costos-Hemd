@@ -28,7 +28,8 @@ const mockDB = {
   ],
   brands: [
     { id: '1', name: 'Soul Chkn', color: '#F97316' },
-    { id: '2', name: 'Green Memo', color: '#22C55E' }
+    { id: '2', name: 'Green Memo', color: '#22C55E' },
+    { id: '3', name: 'Green Memo Everyday', color: '#16A34A' }
   ]
 };
 
@@ -1493,6 +1494,27 @@ export default function App() {
   // Bases activadas por receta (objeto: { recetaId: { polloFrito: true/false, papasFritas: true/false } })
   const [basesPorReceta, setBasesPorReceta] = useState({});
 
+  // ============================================
+  // ARMADOR DE PLATOS (Green Memo Everyday)
+  // ============================================
+  // Componentes reutilizables por marca: { brandId: [componente, ...] }
+  const [componentesPorMarca, setComponentesPorMarca] = useState({});
+  // Categorías de componentes (lista configurable)
+  const [categoriasComponentes, setCategoriasComponentes] = useState([
+    'verdura',
+    'salsa',
+    'crujiente',
+    'ácido',
+    'fresco',
+    'polvo decorativo',
+    'base ensalada',
+    'vinagreta',
+    'topping decorativo',
+    'proteína'
+  ]);
+  // Platos armados por marca: { brandId: [platoArmado, ...] }
+  const [platosArmadosPorMarca, setPlatosArmadosPorMarca] = useState({});
+
   // Empaques/Materiales POR MARCA
   const [empaquesPorMarca, setEmpaquesPorMarca] = useState({
     '1': [ // Soul Chkn
@@ -1704,6 +1726,19 @@ export default function App() {
         if (data.deliveryPorReceta) setDeliveryPorReceta(data.deliveryPorReceta);
         if (data.isvPorReceta) setIsvPorReceta(data.isvPorReceta);
         if (data.precioVentaPorReceta) setPrecioVentaPorReceta(data.precioVentaPorReceta);
+
+        // Armador de platos
+        if (data.componentesPorMarca) setComponentesPorMarca(data.componentesPorMarca);
+        if (Array.isArray(data.categoriasComponentes) && data.categoriasComponentes.length > 0) {
+          setCategoriasComponentes(data.categoriasComponentes);
+        }
+        if (data.platosArmadosPorMarca) setPlatosArmadosPorMarca(data.platosArmadosPorMarca);
+
+        // Asegurar que la marca "Green Memo Everyday" existe (migración automática)
+        const brandsFromDb = data.brands || [];
+        if (!brandsFromDb.some(b => b.name === 'Green Memo Everyday')) {
+          setBrands([...brandsFromDb, { id: '3', name: 'Green Memo Everyday', color: '#16A34A' }]);
+        }
       } else {
         console.log('No hay datos en Firebase, usando valores iniciales');
         // Guardar los datos iniciales en Firebase
@@ -1757,12 +1792,15 @@ export default function App() {
         empaquesPorReceta,
         deliveryPorReceta,
         isvPorReceta,
-        precioVentaPorReceta
+        precioVentaPorReceta,
+        componentesPorMarca,
+        categoriasComponentes,
+        platosArmadosPorMarca
       });
     }, 1000); // Esperar 1 segundo antes de guardar
-    
+
     return () => clearTimeout(timeoutId);
-  }, [ingredients, recetasPorMarca, brands, configCostos, basesRecetaPorMarca, basesPorReceta, empaquesPorMarca, empaquesPorReceta, deliveryPorReceta, isvPorReceta, precioVentaPorReceta, isLoading]);
+  }, [ingredients, recetasPorMarca, brands, configCostos, basesRecetaPorMarca, basesPorReceta, empaquesPorMarca, empaquesPorReceta, deliveryPorReceta, isvPorReceta, precioVentaPorReceta, componentesPorMarca, categoriasComponentes, platosArmadosPorMarca, isLoading]);
 
   const handleLogin = (user) => {
     setCurrentUser(user);
@@ -2224,6 +2262,101 @@ export default function App() {
     }, 0);
   };
 
+  // ============================================
+  // HANDLERS DEL ARMADOR DE PLATOS (Green Memo Everyday)
+  // ============================================
+  const handleAddComponente = (newComponente) => {
+    const componente = {
+      ...newComponente,
+      id: newComponente?.id || ('comp_' + Date.now()),
+      fechaActualizacion: new Date().toLocaleDateString('es-HN')
+    };
+    setComponentesPorMarca(prev => ({
+      ...prev,
+      [selectedBrand.id]: [...(prev[selectedBrand.id] || []), componente]
+    }));
+  };
+
+  const handleUpdateComponente = (updatedComponente) => {
+    setComponentesPorMarca(prev => ({
+      ...prev,
+      [selectedBrand.id]: (prev[selectedBrand.id] || []).map(c =>
+        c.id === updatedComponente.id
+          ? { ...updatedComponente, fechaActualizacion: new Date().toLocaleDateString('es-HN') }
+          : c
+      )
+    }));
+  };
+
+  const handleDeleteComponente = (id) => {
+    setComponentesPorMarca(prev => ({
+      ...prev,
+      [selectedBrand.id]: (prev[selectedBrand.id] || []).filter(c => c.id !== id)
+    }));
+    // Quitar referencias en platos armados existentes
+    setPlatosArmadosPorMarca(prev => {
+      const platos = prev[selectedBrand.id] || [];
+      const limpios = platos.map(p => {
+        const limpiarSeccion = (sec) => {
+          if (!sec) return sec;
+          const nueva = {};
+          Object.keys(sec).forEach(k => {
+            nueva[k] = sec[k] === id ? '' : sec[k];
+          });
+          return nueva;
+        };
+        return {
+          ...p,
+          verdura: limpiarSeccion(p.verdura),
+          ensalada: limpiarSeccion(p.ensalada),
+          proteina: limpiarSeccion(p.proteina)
+        };
+      });
+      return { ...prev, [selectedBrand.id]: limpios };
+    });
+  };
+
+  const handleAddCategoriaComponente = (nuevaCat) => {
+    const cat = (nuevaCat || '').trim().toLowerCase();
+    if (!cat) return;
+    if (categoriasComponentes.includes(cat)) return;
+    setCategoriasComponentes([...categoriasComponentes, cat]);
+  };
+
+  const handleDeleteCategoriaComponente = (cat) => {
+    setCategoriasComponentes(categoriasComponentes.filter(c => c !== cat));
+  };
+
+  const handleAddPlatoArmado = (newPlato) => {
+    const plato = {
+      ...newPlato,
+      id: 'pa_' + Date.now(),
+      fechaActualizacion: new Date().toLocaleDateString('es-HN')
+    };
+    setPlatosArmadosPorMarca(prev => ({
+      ...prev,
+      [selectedBrand.id]: [...(prev[selectedBrand.id] || []), plato]
+    }));
+  };
+
+  const handleUpdatePlatoArmado = (updatedPlato) => {
+    setPlatosArmadosPorMarca(prev => ({
+      ...prev,
+      [selectedBrand.id]: (prev[selectedBrand.id] || []).map(p =>
+        p.id === updatedPlato.id
+          ? { ...updatedPlato, fechaActualizacion: new Date().toLocaleDateString('es-HN') }
+          : p
+      )
+    }));
+  };
+
+  const handleDeletePlatoArmado = (id) => {
+    setPlatosArmadosPorMarca(prev => ({
+      ...prev,
+      [selectedBrand.id]: (prev[selectedBrand.id] || []).filter(p => p.id !== id)
+    }));
+  };
+
   // Sincronizar recetas e ingredientes nuevos del código con Firebase
   const [syncStatus, setSyncStatus] = useState({ syncing: false, result: null });
   
@@ -2478,6 +2611,18 @@ export default function App() {
               onToggleEmpaque={handleToggleEmpaque}
               calcularCostoEmpaques={(recetaId) => calcularCostoEmpaques(recetaId, selectedBrand?.id)}
               onUpdateEmpaques={(newEmpaques) => handleUpdateEmpaques(selectedBrand?.id, newEmpaques)}
+              // Armador de platos (Green Memo Everyday)
+              componentes={componentesPorMarca[selectedBrand?.id] || []}
+              onAddComponente={handleAddComponente}
+              onUpdateComponente={handleUpdateComponente}
+              onDeleteComponente={handleDeleteComponente}
+              categoriasComponentes={categoriasComponentes}
+              onAddCategoriaComponente={handleAddCategoriaComponente}
+              onDeleteCategoriaComponente={handleDeleteCategoriaComponente}
+              platosArmados={platosArmadosPorMarca[selectedBrand?.id] || []}
+              onAddPlatoArmado={handleAddPlatoArmado}
+              onUpdatePlatoArmado={handleUpdatePlatoArmado}
+              onDeletePlatoArmado={handleDeletePlatoArmado}
               // Sincronización
               onSyncData={handleSyncData}
               syncStatus={syncStatus}
@@ -2830,6 +2975,18 @@ function DashboardScreen({
   onToggleEmpaque,
   calcularCostoEmpaques,
   onUpdateEmpaques,
+  // Armador de platos (Green Memo Everyday)
+  componentes,
+  onAddComponente,
+  onUpdateComponente,
+  onDeleteComponente,
+  categoriasComponentes,
+  onAddCategoriaComponente,
+  onDeleteCategoriaComponente,
+  platosArmados,
+  onAddPlatoArmado,
+  onUpdatePlatoArmado,
+  onDeletePlatoArmado,
   // Sincronización
   onSyncData,
   syncStatus
@@ -2922,8 +3079,10 @@ function DashboardScreen({
           />
         )}
         {currentModule === 'recetas' && (
-          <RecetasModule 
+          <RecetasModule
             recipes={recetas}
+            recetasPorMarca={recetasPorMarca}
+            brands={brands}
             ingredients={ingredients}
             onAdd={onAddReceta}
             onUpdate={onUpdateReceta}
@@ -2954,6 +3113,17 @@ function DashboardScreen({
             calcularCostoEmpaques={calcularCostoEmpaques}
             selectedRecipe={selectedRecipe}
             setSelectedRecipe={setSelectedRecipe}
+            componentes={componentes}
+            onAddComponente={onAddComponente}
+            onUpdateComponente={onUpdateComponente}
+            onDeleteComponente={onDeleteComponente}
+            categoriasComponentes={categoriasComponentes}
+            onAddCategoriaComponente={onAddCategoriaComponente}
+            onDeleteCategoriaComponente={onDeleteCategoriaComponente}
+            platosArmados={platosArmados}
+            onAddPlatoArmado={onAddPlatoArmado}
+            onUpdatePlatoArmado={onUpdatePlatoArmado}
+            onDeletePlatoArmado={onDeletePlatoArmado}
           />
         )}
         {currentModule === 'costos' && (
@@ -6512,7 +6682,9 @@ function IngredientModal({ ingredient, ingredients, onClose, onSave }) {
 // ============================================
 // MÓDULO DE RECETAS
 // ============================================
-function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, onDuplicate, onUpdateIngredient, configCostos, deliveryPorReceta, onToggleDelivery, isvPorReceta, onToggleISV, precioVentaPorReceta, onUpdatePrecioVenta, onUpdatePrecioCliente, calcularTotales, basesReceta, basesPorReceta, onToggleBaseReceta, calcularCostoPolloFrito, calcularCostoPolloFritoEnsalada, calcularCostoPapasFritas, calcularCostoBaseSimple, calcularCostoBases, brand, empaques, empaquesPorReceta, onToggleEmpaque, calcularCostoEmpaques, selectedRecipe, setSelectedRecipe }) {
+function RecetasModule({ recipes, recetasPorMarca = {}, brands = [], ingredients, onAdd, onUpdate, onDelete, onDuplicate, onUpdateIngredient, configCostos, deliveryPorReceta, onToggleDelivery, isvPorReceta, onToggleISV, precioVentaPorReceta, onUpdatePrecioVenta, onUpdatePrecioCliente, calcularTotales, basesReceta, basesPorReceta, onToggleBaseReceta, calcularCostoPolloFrito, calcularCostoPolloFritoEnsalada, calcularCostoPapasFritas, calcularCostoBaseSimple, calcularCostoBases, brand, empaques, empaquesPorReceta, onToggleEmpaque, calcularCostoEmpaques, selectedRecipe, setSelectedRecipe, componentes = [], onAddComponente, onUpdateComponente, onDeleteComponente, categoriasComponentes = [], onAddCategoriaComponente, onDeleteCategoriaComponente, platosArmados = [], onAddPlatoArmado, onUpdatePlatoArmado, onDeletePlatoArmado }) {
+  const esGreenMemoEveryday = brand?.name === 'Green Memo Everyday';
+  const [armadorTab, setArmadorTab] = useState('componentes');
   const [showNewRecipeModal, setShowNewRecipeModal] = useState(false);
   const [showResumenCostos, setShowResumenCostos] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState(null);
@@ -6618,9 +6790,47 @@ function RecetasModule({ recipes, ingredients, onAdd, onUpdate, onDelete, onDupl
     return { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' };
   };
 
+  // Vista exclusiva para Green Memo Everyday: Armador de Platos
+  if (esGreenMemoEveryday) {
+    return (
+      <ArmadorPlatosModule
+        brand={brand}
+        brands={brands}
+        recetasPorMarca={recetasPorMarca}
+        ingredients={ingredients}
+        componentes={componentes}
+        onAddComponente={onAddComponente}
+        onUpdateComponente={onUpdateComponente}
+        onDeleteComponente={onDeleteComponente}
+        categoriasComponentes={categoriasComponentes}
+        onAddCategoriaComponente={onAddCategoriaComponente}
+        onDeleteCategoriaComponente={onDeleteCategoriaComponente}
+        platosArmados={platosArmados}
+        onAddPlatoArmado={onAddPlatoArmado}
+        onUpdatePlatoArmado={onUpdatePlatoArmado}
+        onDeletePlatoArmado={onDeletePlatoArmado}
+        configCostos={configCostos}
+        calcularTotales={calcularTotales}
+        empaques={empaques}
+        empaquesPorReceta={empaquesPorReceta}
+        onToggleEmpaque={onToggleEmpaque}
+        calcularCostoEmpaques={calcularCostoEmpaques}
+        deliveryPorReceta={deliveryPorReceta}
+        onToggleDelivery={onToggleDelivery}
+        isvPorReceta={isvPorReceta}
+        onToggleISV={onToggleISV}
+        precioVentaPorReceta={precioVentaPorReceta}
+        onUpdatePrecioVenta={onUpdatePrecioVenta}
+        onUpdatePrecioCliente={onUpdatePrecioCliente}
+        armadorTab={armadorTab}
+        setArmadorTab={setArmadorTab}
+      />
+    );
+  }
+
   if (selectedRecipe) {
     return (
-      <RecipeDetail 
+      <RecipeDetail
         recipe={selectedRecipe}
         ingredients={ingredients}
         onBack={() => setSelectedRecipe(null)}
@@ -8502,6 +8712,1606 @@ function IngredienteAutocomplete({ value, ingredients, onChange, onSelect }) {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// ============================================
+// ARMADOR DE PLATOS (Green Memo Everyday)
+// ============================================
+const SECCIONES_ARMADOR = ['Verdura', 'Ensalada', 'Proteína'];
+
+// Helpers de costo para componentes (usan banco de ingredientes)
+function getIngredienteBanco(ingredients, ingredienteId, ingredienteNombre) {
+  if (ingredienteId) {
+    const byId = ingredients.find(i => i.id === ingredienteId);
+    if (byId) return byId;
+  }
+  if (ingredienteNombre) {
+    return ingredients.find(i => i.ingrediente && i.ingrediente.toLowerCase() === ingredienteNombre.toLowerCase());
+  }
+  return null;
+}
+
+function calcularCostoIngredienteComponente(ing, ingredients) {
+  if (ing.esManual) {
+    const pesoCompra = parseFloat(ing.pesoCompraManual) || 0;
+    const precio = parseFloat(ing.precioManual) || 0;
+    const peso = parseFloat(ing.peso) || 0;
+    if (pesoCompra > 0 && precio > 0 && peso > 0) {
+      return (peso / pesoCompra) * precio;
+    }
+    return 0;
+  }
+  const bancoIng = getIngredienteBanco(ingredients, ing.ingredienteId, ing.ingredienteNombre);
+  if (bancoIng && bancoIng.pesoCompra && bancoIng.precio && ing.peso) {
+    const merma = parseFloat(bancoIng.merma) || 0;
+    const pesoAprovechable = parseFloat(bancoIng.pesoCompra) * (1 - merma / 100);
+    if (pesoAprovechable > 0) {
+      return (parseFloat(ing.peso) / pesoAprovechable) * parseFloat(bancoIng.precio);
+    }
+  }
+  return 0;
+}
+
+function calcularCostoTotalComponente(componente, ingredients) {
+  if (!componente || !Array.isArray(componente.ingredientes)) return 0;
+  return componente.ingredientes.reduce((sum, ing) => sum + calcularCostoIngredienteComponente(ing, ingredients), 0);
+}
+
+function calcularCostoPorcionComponente(componente, ingredients) {
+  const total = calcularCostoTotalComponente(componente, ingredients);
+  const pesoReceta = parseFloat(componente?.pesoReceta) || 0;
+  const pesoPorcion = parseFloat(componente?.pesoPorcion) || 0;
+  if (pesoReceta > 0 && pesoPorcion > 0) {
+    return (pesoPorcion / pesoReceta) * total;
+  }
+  return 0;
+}
+
+function ArmadorPlatosModule({
+  brand,
+  brands = [],
+  recetasPorMarca = {},
+  ingredients,
+  componentes,
+  onAddComponente,
+  onUpdateComponente,
+  onDeleteComponente,
+  categoriasComponentes,
+  onAddCategoriaComponente,
+  onDeleteCategoriaComponente,
+  platosArmados,
+  onAddPlatoArmado,
+  onUpdatePlatoArmado,
+  onDeletePlatoArmado,
+  configCostos,
+  calcularTotales,
+  empaques,
+  empaquesPorReceta,
+  onToggleEmpaque,
+  calcularCostoEmpaques,
+  deliveryPorReceta,
+  onToggleDelivery,
+  isvPorReceta,
+  onToggleISV,
+  precioVentaPorReceta,
+  onUpdatePrecioVenta,
+  onUpdatePrecioCliente,
+  armadorTab,
+  setArmadorTab
+}) {
+  return (
+    <div className="max-w-5xl mx-auto">
+      {/* Header con tabs */}
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-1">Recetas y platos</h2>
+        <p className="text-sm text-gray-500 mb-4">Armador de platos exclusivo de {brand?.name}</p>
+
+        <div className="flex gap-1 border-b border-gray-200">
+          <button
+            onClick={() => setArmadorTab('componentes')}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+              armadorTab === 'componentes'
+                ? 'border-gray-900 text-gray-900'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Componentes
+            <span className="ml-2 px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded">
+              {componentes.length}
+            </span>
+          </button>
+          <button
+            onClick={() => setArmadorTab('platos')}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+              armadorTab === 'platos'
+                ? 'border-gray-900 text-gray-900'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Platos armados
+            <span className="ml-2 px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded">
+              {platosArmados.length}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {armadorTab === 'componentes' ? (
+        <ComponentesTab
+          ingredients={ingredients}
+          componentes={componentes}
+          onAddComponente={onAddComponente}
+          onUpdateComponente={onUpdateComponente}
+          onDeleteComponente={onDeleteComponente}
+          categoriasComponentes={categoriasComponentes}
+          onAddCategoriaComponente={onAddCategoriaComponente}
+          onDeleteCategoriaComponente={onDeleteCategoriaComponente}
+          brands={brands}
+          currentBrand={brand}
+          recetasPorMarca={recetasPorMarca}
+        />
+      ) : (
+        <PlatosArmadosTab
+          ingredients={ingredients}
+          componentes={componentes}
+          platosArmados={platosArmados}
+          onAddPlatoArmado={onAddPlatoArmado}
+          onUpdatePlatoArmado={onUpdatePlatoArmado}
+          onDeletePlatoArmado={onDeletePlatoArmado}
+          configCostos={configCostos}
+          calcularTotales={calcularTotales}
+          empaques={empaques}
+          empaquesPorReceta={empaquesPorReceta}
+          onToggleEmpaque={onToggleEmpaque}
+          calcularCostoEmpaques={calcularCostoEmpaques}
+          deliveryPorReceta={deliveryPorReceta}
+          onToggleDelivery={onToggleDelivery}
+          isvPorReceta={isvPorReceta}
+          onToggleISV={onToggleISV}
+          precioVentaPorReceta={precioVentaPorReceta}
+          onUpdatePrecioVenta={onUpdatePrecioVenta}
+          onUpdatePrecioCliente={onUpdatePrecioCliente}
+        />
+      )}
+    </div>
+  );
+}
+
+// ============================================
+// PESTAÑA COMPONENTES
+// ============================================
+function ComponentesTab({
+  ingredients,
+  componentes,
+  onAddComponente,
+  onUpdateComponente,
+  onDeleteComponente,
+  categoriasComponentes,
+  onAddCategoriaComponente,
+  onDeleteCategoriaComponente,
+  brands = [],
+  currentBrand,
+  recetasPorMarca = {}
+}) {
+  const [showModal, setShowModal] = useState(false);
+  const [editingComponente, setEditingComponente] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [showCategoriasModal, setShowCategoriasModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importToast, setImportToast] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const handleImportSubReceta = (subReceta, recetaOrigen, marcaOrigen) => {
+    const nuevoId = 'comp_' + Date.now();
+    const importado = {
+      id: nuevoId,
+      nombre: subReceta.nombre,
+      categoria: '',
+      secciones: [],
+      pesoReceta: parseFloat(subReceta.pesoReceta) || 0,
+      pesoPorcion: parseFloat(subReceta.pesoPorcion) || 0,
+      ingredientes: (subReceta.ingredientes || []).map((ing, idx) => ({
+        id: ing.id || ('imp_i' + Date.now() + '_' + idx),
+        ingredienteId: ing.ingredienteId || null,
+        ingredienteNombre: ing.ingredienteNombre || '',
+        peso: parseFloat(ing.peso) || 0,
+        esManual: ing.esManual || false,
+        pesoCompraManual: ing.esManual ? (parseFloat(ing.pesoCompraManual) || 0) : null,
+        precioManual: ing.esManual ? (parseFloat(ing.precioManual) || 0) : null
+      }))
+    };
+    onAddComponente(importado);
+    setShowImportModal(false);
+    setImportToast({
+      mensaje: `Sub-receta "${subReceta.nombre}" importada desde ${marcaOrigen?.name || ''} · ${recetaOrigen?.nombre || ''}`
+    });
+    setTimeout(() => setImportToast(null), 4000);
+    setEditingComponente(importado);
+    setShowModal(true);
+  };
+
+  // Agrupar por categoría
+  const componentesFiltrados = componentes.filter(c =>
+    c.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const porCategoria = {};
+  categoriasComponentes.forEach(cat => { porCategoria[cat] = []; });
+  componentesFiltrados.forEach(c => {
+    const cat = c.categoria || 'Sin categoría';
+    if (!porCategoria[cat]) porCategoria[cat] = [];
+    porCategoria[cat].push(c);
+  });
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <p className="text-sm text-gray-500">
+            {componentesFiltrados.length} de {componentes.length} componente{componentes.length !== 1 ? 's' : ''}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowCategoriasModal(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
+            </svg>
+            Categorías
+          </button>
+          <button
+            onClick={() => { setEditingComponente(null); setShowModal(true); }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Nuevo componente
+          </button>
+          <button
+            onClick={() => setShowImportModal(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16" />
+            </svg>
+            Importar sub-receta
+          </button>
+        </div>
+      </div>
+
+      {/* Barra de búsqueda */}
+      <div className="mb-4 relative">
+        <svg className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          type="text"
+          placeholder="Buscar componente..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+        />
+      </div>
+
+      {componentes.length === 0 ? (
+        <div className="text-center py-16 bg-white border border-gray-200 rounded-xl">
+          <div className="w-12 h-12 mx-auto mb-4 text-gray-300">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </div>
+          <p className="text-gray-500 mb-4">No hay componentes creados</p>
+          <button
+            onClick={() => { setEditingComponente(null); setShowModal(true); }}
+            className="text-sm text-gray-900 font-medium hover:underline"
+          >
+            Crear primer componente
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-6">
+          {Object.keys(porCategoria).map(cat => {
+            const items = porCategoria[cat];
+            if (items.length === 0) return null;
+            return (
+              <div key={cat}>
+                <div className="flex items-center gap-2 mb-3">
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">{cat}</h3>
+                  <span className="text-xs text-gray-400">({items.length})</span>
+                </div>
+                <div className="grid gap-3">
+                  {items.map(comp => {
+                    const costoPorcion = calcularCostoPorcionComponente(comp, ingredients);
+                    const costoTotal = calcularCostoTotalComponente(comp, ingredients);
+                    return (
+                      <div key={comp.id} className="bg-white border border-gray-200 rounded-xl p-4 hover:border-gray-300 transition-all">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 flex items-center justify-center bg-green-50 rounded-lg text-green-600">
+                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-900">{comp.nombre}</h4>
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              <span className="text-xs text-gray-500">
+                                {comp.ingredientes?.length || 0} ingrediente{(comp.ingredientes?.length || 0) !== 1 ? 's' : ''}
+                              </span>
+                              <span className="text-gray-300">·</span>
+                              <span className="text-xs text-gray-500">
+                                {comp.pesoPorcion || 0}g de {comp.pesoReceta || 0}g
+                              </span>
+                              {(comp.secciones || []).map(sec => (
+                                <span key={sec} className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded">{sec}</span>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="text-right mr-2">
+                            <p className="text-xs text-gray-500">Costo por porción</p>
+                            <p className="font-semibold text-gray-900">L{costoPorcion.toFixed(2)}</p>
+                            <p className="text-xs text-gray-400">Total: L{costoTotal.toFixed(2)}</p>
+                          </div>
+                          <div className="flex items-center gap-1 border-l border-gray-200 pl-3">
+                            <button
+                              onClick={() => { setEditingComponente(comp); setShowModal(true); }}
+                              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                              title="Editar"
+                            >
+                              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirm(comp)}
+                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                              title="Eliminar"
+                            >
+                              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {showModal && (
+        <ComponenteModal
+          componente={editingComponente}
+          ingredients={ingredients}
+          categoriasComponentes={categoriasComponentes}
+          onClose={() => { setShowModal(false); setEditingComponente(null); }}
+          onSave={(comp) => {
+            if (editingComponente) {
+              onUpdateComponente({ ...comp, id: editingComponente.id });
+            } else {
+              onAddComponente(comp);
+            }
+            setShowModal(false);
+            setEditingComponente(null);
+          }}
+        />
+      )}
+
+      {showCategoriasModal && (
+        <CategoriasComponentesModal
+          categorias={categoriasComponentes}
+          componentes={componentes}
+          onAdd={onAddCategoriaComponente}
+          onDelete={onDeleteCategoriaComponente}
+          onClose={() => setShowCategoriasModal(false)}
+        />
+      )}
+
+      {showImportModal && (
+        <ImportarSubRecetaModal
+          brands={brands}
+          currentBrand={currentBrand}
+          recetasPorMarca={recetasPorMarca}
+          ingredients={ingredients}
+          onClose={() => setShowImportModal(false)}
+          onImport={handleImportSubReceta}
+        />
+      )}
+
+      {importToast && (
+        <div className="fixed bottom-6 right-6 z-[60] max-w-sm bg-white border border-green-200 rounded-xl shadow-lg p-4 flex items-start gap-3">
+          <div className="w-8 h-8 flex items-center justify-center bg-green-50 text-green-600 rounded-lg flex-shrink-0">
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-gray-900">Sub-receta importada</p>
+            <p className="text-xs text-gray-600 mt-0.5">{importToast.mensaje}</p>
+          </div>
+          <button onClick={() => setImportToast(null)} className="text-gray-400 hover:text-gray-600">
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-5 z-50" onClick={() => setDeleteConfirm(null)}>
+          <div className="w-full max-w-sm bg-white rounded-xl p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Eliminar componente</h3>
+            <p className="text-gray-600 mb-6">
+              ¿Eliminar <strong>"{deleteConfirm.nombre}"</strong>? Se quitará de los platos armados que lo usen.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">
+                Cancelar
+              </button>
+              <button onClick={() => { onDeleteComponente(deleteConfirm.id); setDeleteConfirm(null); }} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================
+// MODAL IMPORTAR SUB-RECETA (desde otra marca)
+// ============================================
+function ImportarSubRecetaModal({ brands, currentBrand, recetasPorMarca, ingredients, onClose, onImport }) {
+  const marcasDisponibles = (brands || []).filter(b => b.id !== currentBrand?.id);
+  const [marcaIdSel, setMarcaIdSel] = useState('');
+  const [recetaIdSel, setRecetaIdSel] = useState('');
+
+  const marcaSeleccionada = marcasDisponibles.find(b => b.id === marcaIdSel) || null;
+  const recetasDeMarca = marcaIdSel ? (recetasPorMarca[marcaIdSel] || []) : [];
+  const recetaSeleccionada = recetasDeMarca.find(r => r.id === recetaIdSel) || null;
+  const subRecetas = recetaSeleccionada?.subRecetas || [];
+
+  const calcularCostoSubReceta = (sr) => {
+    if (!sr || !Array.isArray(sr.ingredientes)) return 0;
+    return sr.ingredientes.reduce(
+      (sum, ing) => sum + calcularCostoIngredienteComponente(ing, ingredients),
+      0
+    );
+  };
+
+  const calcularCostoPorcionSR = (sr) => {
+    const total = calcularCostoSubReceta(sr);
+    const pesoReceta = parseFloat(sr?.pesoReceta) || 0;
+    const pesoPorcion = parseFloat(sr?.pesoPorcion) || 0;
+    if (pesoReceta > 0 && pesoPorcion > 0) {
+      return (pesoPorcion / pesoReceta) * total;
+    }
+    return 0;
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-5 z-50" onClick={onClose}>
+      <div className="w-full max-w-2xl bg-white rounded-xl overflow-hidden max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Importar sub-receta</h3>
+            <p className="text-xs text-gray-500 mt-0.5">Copia una sub-receta de otra marca como nuevo componente</p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600">
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6">
+          {/* Paso 1: Marca de origen */}
+          <div className="mb-5">
+            <label className="text-sm font-medium text-gray-700 block mb-1.5">
+              <span className="inline-flex items-center justify-center w-5 h-5 bg-gray-900 text-white rounded-full text-xs font-semibold mr-2">1</span>
+              Marca de origen
+            </label>
+            <select
+              value={marcaIdSel}
+              onChange={(e) => { setMarcaIdSel(e.target.value); setRecetaIdSel(''); }}
+              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-gray-400 bg-white"
+            >
+              <option value="">— Selecciona una marca —</option>
+              {marcasDisponibles.map(b => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+            {marcasDisponibles.length === 0 && (
+              <p className="text-xs text-gray-500 mt-1.5">No hay otras marcas disponibles.</p>
+            )}
+          </div>
+
+          {/* Paso 2: Plato/Receta */}
+          {marcaIdSel && (
+            <div className="mb-5">
+              <label className="text-sm font-medium text-gray-700 block mb-1.5">
+                <span className="inline-flex items-center justify-center w-5 h-5 bg-gray-900 text-white rounded-full text-xs font-semibold mr-2">2</span>
+                Plato / receta
+              </label>
+              <select
+                value={recetaIdSel}
+                onChange={(e) => setRecetaIdSel(e.target.value)}
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-gray-400 bg-white"
+              >
+                <option value="">— Selecciona un plato —</option>
+                {recetasDeMarca.map(r => (
+                  <option key={r.id} value={r.id}>{r.nombre}</option>
+                ))}
+              </select>
+              {recetasDeMarca.length === 0 && (
+                <p className="text-xs text-gray-500 mt-1.5">Esta marca no tiene recetas registradas.</p>
+              )}
+            </div>
+          )}
+
+          {/* Paso 3: Sub-recetas */}
+          {recetaIdSel && (
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-2">
+                <span className="inline-flex items-center justify-center w-5 h-5 bg-gray-900 text-white rounded-full text-xs font-semibold mr-2">3</span>
+                Selecciona una sub-receta
+              </label>
+              {subRecetas.length === 0 ? (
+                <div className="text-center py-10 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-500">
+                  Este plato no tiene sub-recetas.
+                </div>
+              ) : (
+                <div className="border border-gray-200 rounded-lg divide-y divide-gray-100 overflow-hidden">
+                  {subRecetas.map(sr => {
+                    const costoTotal = calcularCostoSubReceta(sr);
+                    const costoPorcion = calcularCostoPorcionSR(sr);
+                    return (
+                      <button
+                        key={sr.id}
+                        onClick={() => onImport(sr, recetaSeleccionada, marcaSeleccionada)}
+                        className="w-full flex items-center gap-4 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
+                      >
+                        <div className="w-10 h-10 flex items-center justify-center bg-green-50 rounded-lg text-green-600 flex-shrink-0">
+                          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                          </svg>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{sr.nombre}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {sr.ingredientes?.length || 0} ingrediente{(sr.ingredientes?.length || 0) !== 1 ? 's' : ''}
+                            <span className="text-gray-300 mx-1.5">·</span>
+                            {sr.pesoPorcion || 0}g de {sr.pesoReceta || 0}g
+                          </p>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-xs text-gray-500">Costo por porción</p>
+                          <p className="text-sm font-semibold text-gray-900">L{costoPorcion.toFixed(2)}</p>
+                          <p className="text-xs text-gray-400">Total: L{costoTotal.toFixed(2)}</p>
+                        </div>
+                        <svg className="w-4 h-4 text-gray-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {!marcaIdSel && marcasDisponibles.length > 0 && (
+            <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-xs text-blue-700">
+                <span className="font-semibold">ℹ️ Cómo funciona:</span> Selecciona la marca y el plato del que quieres importar. Luego elige la sub-receta y se creará un nuevo componente con los mismos ingredientes y pesos.
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-3 justify-end px-6 py-4 border-t border-gray-200 bg-gray-50">
+          <button onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// MODAL CATEGORÍAS DE COMPONENTES
+// ============================================
+function CategoriasComponentesModal({ categorias, componentes, onAdd, onDelete, onClose }) {
+  const [nuevaCat, setNuevaCat] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+
+  const handleAdd = () => {
+    if (nuevaCat.trim()) {
+      onAdd(nuevaCat.trim());
+      setNuevaCat('');
+    }
+  };
+
+  const cuentaEnUso = (cat) => componentes.filter(c => c.categoria === cat).length;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-5 z-50" onClick={onClose}>
+      <div className="w-full max-w-md bg-white rounded-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">Categorías</h3>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600">
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="p-6">
+          <div className="flex gap-2 mb-4">
+            <input
+              type="text"
+              value={nuevaCat}
+              onChange={(e) => setNuevaCat(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+              placeholder="Nueva categoría..."
+              className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+            />
+            <button
+              onClick={handleAdd}
+              className="px-4 py-2.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800"
+            >
+              Agregar
+            </button>
+          </div>
+
+          <div className="border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-80 overflow-y-auto">
+            {categorias.length === 0 ? (
+              <div className="px-3 py-8 text-center text-gray-500 text-sm">No hay categorías</div>
+            ) : categorias.map(cat => {
+              const uso = cuentaEnUso(cat);
+              return (
+                <div key={cat} className="flex items-center justify-between px-3 py-2.5">
+                  <div>
+                    <span className="text-sm text-gray-900">{cat}</span>
+                    {uso > 0 && <span className="ml-2 text-xs text-gray-400">({uso} en uso)</span>}
+                  </div>
+                  <button
+                    onClick={() => uso > 0 ? setDeleteConfirm(cat) : onDelete(cat)}
+                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                    title="Eliminar"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex gap-3 justify-end px-6 py-4 border-t border-gray-200 bg-gray-50">
+          <button onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+            Cerrar
+          </button>
+        </div>
+
+        {deleteConfirm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-5 z-50" onClick={() => setDeleteConfirm(null)}>
+            <div className="w-full max-w-sm bg-white rounded-xl p-6" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Eliminar categoría</h3>
+              <p className="text-gray-600 mb-6">
+                La categoría <strong>"{deleteConfirm}"</strong> está en uso por {cuentaEnUso(deleteConfirm)} componente(s). Los componentes quedarán sin categoría.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">
+                  Cancelar
+                </button>
+                <button onClick={() => { onDelete(deleteConfirm); setDeleteConfirm(null); }} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">
+                  Eliminar igual
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// MODAL COMPONENTE (crear/editar)
+// ============================================
+function ComponenteModal({ componente, ingredients, categoriasComponentes, onClose, onSave }) {
+  const isEditing = !!componente;
+  const [nombre, setNombre] = useState(componente?.nombre || '');
+  const [categoria, setCategoria] = useState(componente?.categoria || (categoriasComponentes[0] || ''));
+  const [secciones, setSecciones] = useState(componente?.secciones || []);
+  const [pesoReceta, setPesoReceta] = useState(componente?.pesoReceta || '');
+  const [pesoPorcion, setPesoPorcion] = useState(componente?.pesoPorcion || '');
+  const [ingredientesReceta, setIngredientesReceta] = useState(
+    componente?.ingredientes?.map(ing => ({
+      id: ing.id,
+      ingredienteId: ing.ingredienteId || null,
+      ingredienteNombre: ing.ingredienteNombre || '',
+      peso: ing.peso,
+      esManual: ing.esManual || false,
+      pesoCompraManual: ing.pesoCompraManual || '',
+      precioManual: ing.precioManual || ''
+    })) || []
+  );
+
+  const toggleSeccion = (sec) => {
+    setSecciones(prev => prev.includes(sec) ? prev.filter(s => s !== sec) : [...prev, sec]);
+  };
+
+  const handleAddIngrediente = () => {
+    setIngredientesReceta([...ingredientesReceta, {
+      id: 'i' + Date.now(),
+      ingredienteId: null,
+      ingredienteNombre: '',
+      peso: '',
+      esManual: false,
+      pesoCompraManual: '',
+      precioManual: ''
+    }]);
+  };
+
+  const handleConvertirAManual = (index) => {
+    const updated = [...ingredientesReceta];
+    updated[index].esManual = true;
+    updated[index].ingredienteId = null;
+    setIngredientesReceta(updated);
+  };
+
+  const handleUpdateIngrediente = (index, field, value) => {
+    const updated = [...ingredientesReceta];
+    updated[index][field] = value;
+    setIngredientesReceta(updated);
+  };
+
+  const handleSelectIngrediente = (index, selectedIngredient) => {
+    const updated = [...ingredientesReceta];
+    updated[index].ingredienteId = selectedIngredient.id;
+    updated[index].ingredienteNombre = selectedIngredient.ingrediente;
+    setIngredientesReceta(updated);
+  };
+
+  const handleRemoveIngrediente = (index) => {
+    setIngredientesReceta(ingredientesReceta.filter((_, i) => i !== index));
+  };
+
+  const costoTotal = ingredientesReceta.reduce(
+    (sum, ing) => sum + calcularCostoIngredienteComponente(ing, ingredients),
+    0
+  );
+
+  const costoPorcion = pesoReceta && pesoPorcion
+    ? (parseFloat(pesoPorcion) / parseFloat(pesoReceta)) * costoTotal
+    : 0;
+
+  const handleSubmit = () => {
+    if (!nombre.trim() || !categoria) return;
+    onSave({
+      nombre: nombre.trim(),
+      categoria,
+      secciones,
+      pesoReceta: parseFloat(pesoReceta) || 0,
+      pesoPorcion: parseFloat(pesoPorcion) || 0,
+      ingredientes: ingredientesReceta.map(ing => {
+        const bancoIng = getIngredienteBanco(ingredients, ing.ingredienteId, ing.ingredienteNombre);
+        return {
+          id: ing.id,
+          ingredienteId: ing.esManual ? null : (ing.ingredienteId || (bancoIng ? bancoIng.id : null)),
+          ingredienteNombre: ing.esManual ? ing.ingredienteNombre : (bancoIng ? bancoIng.ingrediente : ing.ingredienteNombre),
+          peso: parseFloat(ing.peso) || 0,
+          esManual: ing.esManual || false,
+          pesoCompraManual: ing.esManual ? (parseFloat(ing.pesoCompraManual) || 0) : null,
+          precioManual: ing.esManual ? (parseFloat(ing.precioManual) || 0) : null
+        };
+      })
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-5 z-50" onClick={onClose}>
+      <div className="w-full max-w-4xl bg-white rounded-xl overflow-hidden max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">
+            {isEditing ? 'Editar componente' : 'Nuevo componente'}
+          </h3>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600">
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6">
+          {/* Nombre y categoría */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700">Nombre del componente</label>
+              <input
+                type="text"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+                placeholder="Ej: Berenjena asada, Vinagreta de mostaza..."
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700">Categoría</label>
+              <select
+                value={categoria}
+                onChange={(e) => setCategoria(e.target.value)}
+                className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-gray-400 bg-white"
+              >
+                <option value="">— Selecciona categoría —</option>
+                {categoriasComponentes.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Secciones */}
+          <div className="mb-6">
+            <label className="text-sm font-medium text-gray-700 block mb-2">Secciones donde aparece</label>
+            <div className="flex gap-4 flex-wrap">
+              {SECCIONES_ARMADOR.map(sec => (
+                <label key={sec} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={secciones.includes(sec)}
+                    onChange={() => toggleSeccion(sec)}
+                    className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                  />
+                  <span className="text-sm text-gray-700">{sec}</span>
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-1.5">El componente solo aparecerá en los selectores de las secciones marcadas.</p>
+          </div>
+
+          {/* Nota */}
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-xs text-blue-700">
+              <span className="font-semibold">ℹ️ Sincronizado:</span> Los valores de peso de compra, precio y merma se obtienen automáticamente del banco de ingredientes y se actualizan en tiempo real.
+            </p>
+          </div>
+
+          {/* Tabla de ingredientes */}
+          <div className="mb-6">
+            <div className="flex justify-between items-center mb-3">
+              <label className="text-sm font-medium text-gray-700">Ingredientes</label>
+            </div>
+
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="text-left px-3 py-2 font-medium text-gray-700">Ingrediente</th>
+                    <th className="text-right px-3 py-2 font-medium text-gray-700 w-24">Peso (g)</th>
+                    <th className="text-right px-3 py-2 font-medium text-gray-700 w-28">Peso compra</th>
+                    <th className="text-right px-3 py-2 font-medium text-gray-700 w-20">Merma</th>
+                    <th className="text-right px-3 py-2 font-medium text-gray-700 w-28">Precio compra</th>
+                    <th className="text-right px-3 py-2 font-medium text-gray-700 w-24">Costo</th>
+                    <th className="w-10"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {ingredientesReceta.map((ing, index) => {
+                    const bancoIng = getIngredienteBanco(ingredients, ing.ingredienteId, ing.ingredienteNombre);
+                    const nombreMostrar = ing.esManual ? ing.ingredienteNombre : (bancoIng ? bancoIng.ingrediente : ing.ingredienteNombre);
+                    const noEncontrado = !ing.esManual && (ing.ingredienteNombre || ing.ingredienteId) && !bancoIng && (ing.ingredienteNombre || '').trim() !== '';
+                    return (
+                      <tr key={ing.id} className={ing.esManual ? 'bg-blue-50/50' : ''}>
+                        <td className="px-3 py-2 align-top">
+                          {ing.esManual ? (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={ing.ingredienteNombre}
+                                onChange={(e) => handleUpdateIngrediente(index, 'ingredienteNombre', e.target.value)}
+                                className="flex-1 px-2 py-1.5 border border-blue-300 rounded text-sm bg-white focus:outline-none focus:border-blue-400"
+                                placeholder="Nombre del ingrediente"
+                              />
+                              <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded whitespace-nowrap">Manual</span>
+                            </div>
+                          ) : (
+                            <div>
+                              <IngredienteAutocomplete
+                                value={nombreMostrar || ''}
+                                ingredients={ingredients}
+                                onChange={(value) => handleUpdateIngrediente(index, 'ingredienteNombre', value)}
+                                onSelect={(selectedIng) => handleSelectIngrediente(index, selectedIng)}
+                              />
+                              {noEncontrado && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  No encontrado: <button
+                                    onClick={() => handleConvertirAManual(index)}
+                                    className="text-blue-600 hover:text-blue-800 hover:underline"
+                                  >agregar manual</button>
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-3 py-2 align-top">
+                          <input
+                            type="number"
+                            value={ing.peso}
+                            onChange={(e) => handleUpdateIngrediente(index, 'peso', e.target.value)}
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm text-right focus:outline-none focus:border-gray-400"
+                            placeholder="0"
+                          />
+                        </td>
+                        <td className="px-3 py-2 align-top text-right">
+                          {ing.esManual ? (
+                            <input
+                              type="number"
+                              value={ing.pesoCompraManual}
+                              onChange={(e) => handleUpdateIngrediente(index, 'pesoCompraManual', e.target.value)}
+                              className="w-full px-2 py-1.5 border border-blue-300 rounded text-sm text-right bg-white focus:outline-none focus:border-blue-400"
+                              placeholder="0"
+                            />
+                          ) : (
+                            <span className="text-gray-600">{bancoIng?.pesoCompra ? `${bancoIng.pesoCompra}g` : '-'}</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2 align-top text-right">
+                          {ing.esManual ? (
+                            <span className="text-gray-400 text-xs">N/A</span>
+                          ) : bancoIng?.merma > 0 ? (
+                            <span className="inline-block px-2 py-1 bg-amber-50 text-amber-700 rounded text-xs font-medium">{bancoIng.merma}%</span>
+                          ) : (
+                            <span className="text-gray-400 text-xs">0%</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2 align-top text-right">
+                          {ing.esManual ? (
+                            <div className="flex items-center justify-end">
+                              <span className="text-gray-400 text-sm mr-1">L</span>
+                              <input
+                                type="number"
+                                value={ing.precioManual}
+                                onChange={(e) => handleUpdateIngrediente(index, 'precioManual', e.target.value)}
+                                className="w-20 px-2 py-1.5 border border-blue-300 rounded text-sm text-right bg-white focus:outline-none focus:border-blue-400"
+                                placeholder="0.00"
+                              />
+                            </div>
+                          ) : (
+                            <span className="text-gray-600">{bancoIng?.precio ? `L${bancoIng.precio.toFixed(2)}` : '-'}</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2 align-top text-right font-medium text-gray-900">
+                          L{calcularCostoIngredienteComponente(ing, ingredients).toFixed(2)}
+                        </td>
+                        <td className="px-2 py-2 align-top">
+                          <button onClick={() => handleRemoveIngrediente(index)} className="p-1 text-gray-400 hover:text-red-600">
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M18 6L6 18M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {ingredientesReceta.length === 0 && (
+                    <tr>
+                      <td colSpan="7" className="px-3 py-8 text-center text-gray-500">
+                        Haz clic en "Agregar ingrediente" para comenzar
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+                {ingredientesReceta.length > 0 && (
+                  <tfoot>
+                    <tr className="bg-gray-50 font-medium">
+                      <td colSpan="5" className="px-3 py-2 text-gray-700">TOTAL</td>
+                      <td className="px-3 py-2 text-right text-gray-900">L{costoTotal.toFixed(2)}</td>
+                      <td></td>
+                    </tr>
+                  </tfoot>
+                )}
+              </table>
+            </div>
+
+            <button
+              onClick={handleAddIngrediente}
+              className="mt-3 w-full py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-dashed border-gray-300 rounded-lg flex items-center justify-center gap-2 transition-colors"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              Agregar ingrediente
+            </button>
+          </div>
+
+          {/* Peso receta y porción */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700">Peso de la receta (g)</label>
+              <input
+                type="number"
+                value={pesoReceta}
+                onChange={(e) => setPesoReceta(e.target.value)}
+                className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+                placeholder="Suma total de pesos"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700">Peso por porción (g)</label>
+              <input
+                type="number"
+                value={pesoPorcion}
+                onChange={(e) => setPesoPorcion(e.target.value)}
+                className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+                placeholder="Cantidad usada en el plato"
+              />
+            </div>
+          </div>
+
+          {pesoReceta && pesoPorcion && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="text-green-700 font-medium">Costo por porción</span>
+                <span className="text-xl font-bold text-green-700">L{costoPorcion.toFixed(2)}</span>
+              </div>
+              <p className="text-sm text-green-600 mt-1">
+                ({pesoPorcion}g de {pesoReceta}g totales)
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-3 justify-end px-6 py-4 border-t border-gray-200 bg-gray-50">
+          <button onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+            Cancelar
+          </button>
+          <button onClick={handleSubmit} className="px-5 py-2.5 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800">
+            {isEditing ? 'Guardar cambios' : 'Crear componente'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// PESTAÑA PLATOS ARMADOS
+// ============================================
+function PlatosArmadosTab({
+  ingredients,
+  componentes,
+  platosArmados,
+  onAddPlatoArmado,
+  onUpdatePlatoArmado,
+  onDeletePlatoArmado,
+  configCostos,
+  calcularTotales,
+  empaques,
+  empaquesPorReceta,
+  onToggleEmpaque,
+  calcularCostoEmpaques,
+  deliveryPorReceta,
+  onToggleDelivery,
+  isvPorReceta,
+  onToggleISV,
+  precioVentaPorReceta,
+  onUpdatePrecioVenta,
+  onUpdatePrecioCliente
+}) {
+  const [showModal, setShowModal] = useState(false);
+  const [editingPlato, setEditingPlato] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [expandedExtras, setExpandedExtras] = useState({});
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const totales = calcularTotales();
+  const costoFijoPorPlato = totales.costoFijoPorPlato;
+
+  const getFoodCostColor = (foodCost) => {
+    if (foodCost <= 30) return { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200' };
+    if (foodCost <= 35) return { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' };
+    return { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' };
+  };
+
+  // Obtener el componente por id
+  const getCompById = (id) => componentes.find(c => c.id === id);
+
+  // Calcular costo directo del plato (suma de costos por porción de los componentes seleccionados)
+  const calcularCostoDirectoPlato = (plato) => {
+    let total = 0;
+    const acc = (cid) => {
+      if (!cid) return;
+      const c = getCompById(cid);
+      if (!c) return;
+      total += calcularCostoPorcionComponente(c, ingredients);
+    };
+    const v = plato.verdura || {};
+    const e = plato.ensalada || {};
+    const p = plato.proteina || {};
+    acc(v.verdura); acc(v.salsa1); acc(v.salsa2); acc(v.crujiente); acc(v.acido); acc(v.fresco); acc(v.polvoDecorativo);
+    acc(e.base); acc(e.vinagreta); acc(e.toppingDecorativo);
+    acc(p.proteina);
+    return total;
+  };
+
+  const platosFiltrados = platosArmados.filter(p =>
+    (p.nombre || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-4">
+        <p className="text-sm text-gray-500">
+          {platosFiltrados.length} de {platosArmados.length} plato{platosArmados.length !== 1 ? 's' : ''}
+        </p>
+        <button
+          onClick={() => { setEditingPlato(null); setShowModal(true); }}
+          className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Armar plato
+        </button>
+      </div>
+
+      <div className="mb-4 relative">
+        <svg className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          type="text"
+          placeholder="Buscar plato..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+        />
+      </div>
+
+      <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-between">
+        <span className="text-sm text-gray-600">Costo fijo prorrateado por plato:</span>
+        <span className="text-sm font-semibold text-gray-900">L{costoFijoPorPlato.toFixed(2)}</span>
+      </div>
+
+      {platosArmados.length === 0 ? (
+        <div className="text-center py-16 bg-white border border-gray-200 rounded-xl">
+          <div className="w-12 h-12 mx-auto mb-4 text-gray-300">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </div>
+          <p className="text-gray-500 mb-4">No hay platos armados</p>
+          <button
+            onClick={() => { setEditingPlato(null); setShowModal(true); }}
+            className="text-sm text-gray-900 font-medium hover:underline"
+          >
+            Armar primer plato
+          </button>
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {platosFiltrados.map(plato => {
+            const costoDirecto = calcularCostoDirectoPlato(plato);
+            const costoEmpaquesReceta = calcularCostoEmpaques(plato.id);
+            const tieneEmpaques = costoEmpaquesReceta > 0;
+            const costoTotal = costoDirecto + costoEmpaquesReceta;
+            const tieneDelivery = deliveryPorReceta[plato.id] || false;
+            const precioVenta = precioVentaPorReceta[plato.id] || 0;
+            const tieneISV = isvPorReceta[plato.id] || false;
+            const montoISV = tieneISV ? precioVenta * (configCostos.porcentajeISV / 100) : 0;
+            const precioBase = precioVenta + montoISV;
+            const montoDelivery = tieneDelivery ? precioBase * (configCostos.porcentajeDelivery / 100) : 0;
+            const precioCliente = precioBase + montoDelivery;
+            const foodCost = precioVenta > 0 ? (costoDirecto / precioVenta) * 100 : 0;
+            const margenContribucion = precioVenta - costoTotal;
+            const margenReal = precioVenta - costoTotal - costoFijoPorPlato;
+            const foodCostColors = getFoodCostColor(foodCost);
+
+            // Contar componentes seleccionados
+            const contarSec = (sec) => Object.values(sec || {}).filter(Boolean).length;
+            const totalSel = contarSec(plato.verdura) + contarSec(plato.ensalada) + contarSec(plato.proteina);
+
+            return (
+              <div key={plato.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-gray-300 transition-all">
+                <div className="flex items-center gap-4 p-5">
+                  <button
+                    onClick={() => { setEditingPlato(plato); setShowModal(true); }}
+                    className="flex-1 flex items-center gap-4 text-left"
+                  >
+                    <div className="w-12 h-12 flex items-center justify-center bg-green-50 rounded-lg text-green-600">
+                      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-medium text-gray-900">{plato.nombre}</h3>
+                      <p className="text-sm text-gray-500">{totalSel} componente{totalSel !== 1 ? 's' : ''} seleccionado{totalSel !== 1 ? 's' : ''}</p>
+                    </div>
+                    <div className="text-right mr-2">
+                      <p className="text-xs text-gray-500">Costo Total</p>
+                      <p className="font-semibold text-gray-900">L{costoTotal.toFixed(2)}</p>
+                    </div>
+                    <svg className="w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M9 18l6-6-6-6" />
+                    </svg>
+                  </button>
+                  <div className="flex items-center gap-1 border-l border-gray-200 pl-4">
+                    <button
+                      onClick={() => setDeleteConfirm(plato)}
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                      title="Eliminar"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Costos visibles - mismo estilo que las recetas */}
+                <div className="px-5 pb-3 pt-0">
+                  <div className="grid grid-cols-3 gap-3 text-sm mb-3">
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-gray-500 text-xs mb-1">Costo Directo</p>
+                      <p className="font-semibold text-gray-900">L{costoDirecto.toFixed(2)}</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-gray-500 text-xs mb-1">Costo Fijo Prorrateado</p>
+                      <p className="font-semibold text-gray-900">L{costoFijoPorPlato.toFixed(2)}</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-gray-500 text-xs mb-1">Costo Total {tieneEmpaques ? '(+emp)' : ''}</p>
+                      <p className="font-semibold text-gray-900">L{costoTotal.toFixed(2)}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3 text-sm mb-3">
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-gray-500 text-xs mb-1">Precio Venta</p>
+                      <div className="flex items-baseline">
+                        <span className="text-gray-400 text-sm mr-0.5">L</span>
+                        <input
+                          type="number"
+                          value={precioVenta || ''}
+                          onChange={(e) => onUpdatePrecioVenta(plato.id, e.target.value)}
+                          className="w-full bg-transparent font-semibold text-gray-900 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-gray-500 text-xs mb-1">ISV ({configCostos.porcentajeISV}%)</p>
+                      <p className={`font-semibold ${tieneISV ? 'text-gray-900' : 'text-gray-400'}`}>
+                        L{montoISV.toFixed(2)}
+                      </p>
+                    </div>
+                    <div className={`rounded-lg p-3 ${tieneDelivery ? 'bg-blue-50' : 'bg-gray-50'}`}>
+                      <p className={`text-xs mb-1 ${tieneDelivery ? 'text-blue-600' : 'text-gray-500'}`}>
+                        PVP {tieneDelivery ? `(+${configCostos.porcentajeDelivery}%)` : ''}
+                      </p>
+                      <div className="flex items-baseline">
+                        <span className={`text-sm mr-0.5 ${tieneDelivery ? 'text-blue-400' : 'text-gray-400'}`}>L</span>
+                        <input
+                          type="number"
+                          defaultValue={precioCliente > 0 ? precioCliente.toFixed(2) : ''}
+                          key={`pvp-${plato.id}-${tieneDelivery}-${tieneISV}-${precioVenta}`}
+                          onBlur={(e) => onUpdatePrecioCliente(plato.id, e.target.value)}
+                          className={`w-full bg-transparent font-semibold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${tieneDelivery ? 'text-blue-700' : 'text-gray-900'}`}
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3 text-sm mb-3">
+                    <div className={`rounded-lg p-3 ${precioVenta > 0 ? foodCostColors.bg : 'bg-gray-50'}`}>
+                      <p className={`text-xs mb-1 ${precioVenta > 0 ? foodCostColors.text : 'text-gray-500'}`}>Food Cost</p>
+                      <p className={`font-semibold ${precioVenta > 0 ? foodCostColors.text : 'text-gray-400'}`}>
+                        {precioVenta > 0 ? `${foodCost.toFixed(1)}%` : '-'}
+                      </p>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-gray-500 text-xs mb-1">Margen Contribución</p>
+                      <p className={`font-semibold ${precioVenta > 0 ? (margenContribucion >= 0 ? 'text-green-600' : 'text-red-600') : 'text-gray-400'}`}>
+                        {precioVenta > 0 ? `L${margenContribucion.toFixed(2)} (${((margenContribucion / precioVenta) * 100).toFixed(1)}%)` : '-'}
+                      </p>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-gray-500 text-xs mb-1">Margen Real</p>
+                      <p className={`font-semibold ${precioVenta > 0 ? (margenReal >= 0 ? 'text-green-600' : 'text-red-600') : 'text-gray-400'}`}>
+                        {precioVenta > 0 ? `L${margenReal.toFixed(2)} (${((margenReal / precioVenta) * 100).toFixed(1)}%)` : '-'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Componentes adicionales: empaques, ISV, delivery */}
+                  <button
+                    onClick={() => setExpandedExtras(prev => ({ ...prev, [plato.id]: !prev[plato.id] }))}
+                    className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <span className="font-medium text-gray-700">Componentes adicionales</span>
+                    <svg
+                      className={`w-5 h-5 text-gray-500 transition-transform ${expandedExtras[plato.id] ? 'rotate-180' : ''}`}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {expandedExtras[plato.id] && (
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <div className="mb-3 pb-3 border-b border-gray-100">
+                        <span className="text-xs font-medium text-gray-500 uppercase block mb-2">Empaque / Materiales:</span>
+                        {empaques.length === 0 ? (
+                          <p className="text-xs text-gray-400">No hay empaques configurados para esta marca.</p>
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            {empaques.map(emp => {
+                              const empaquesActivos = empaquesPorReceta[plato.id] || {};
+                              const isActive = empaquesActivos[emp.id] || false;
+                              return (
+                                <label key={emp.id} className="flex items-center gap-2 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={isActive}
+                                    onChange={() => onToggleEmpaque(plato.id, emp.id)}
+                                    className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                                  />
+                                  <span className="text-sm text-gray-700">{emp.nombre} <span className="text-gray-400">(L{emp.precio.toFixed(2)})</span></span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-6">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-600">Delivery (+{configCostos.porcentajeDelivery}%)</span>
+                            <button
+                              onClick={() => onToggleDelivery(plato.id)}
+                              className={`relative w-10 h-5 rounded-full transition-colors ${tieneDelivery ? 'bg-blue-500' : 'bg-gray-300'}`}
+                            >
+                              <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${tieneDelivery ? 'left-5' : 'left-0.5'}`} />
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-600">ISV ({configCostos.porcentajeISV}%)</span>
+                            <button
+                              onClick={() => onToggleISV(plato.id)}
+                              className={`relative w-10 h-5 rounded-full transition-colors ${tieneISV ? 'bg-green-500' : 'bg-gray-300'}`}
+                            >
+                              <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${tieneISV ? 'left-5' : 'left-0.5'}`} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {showModal && (
+        <PlatoArmadoModal
+          plato={editingPlato}
+          componentes={componentes}
+          ingredients={ingredients}
+          onClose={() => { setShowModal(false); setEditingPlato(null); }}
+          onSave={(plato) => {
+            if (editingPlato) {
+              onUpdatePlatoArmado({ ...plato, id: editingPlato.id });
+            } else {
+              onAddPlatoArmado(plato);
+            }
+            setShowModal(false);
+            setEditingPlato(null);
+          }}
+        />
+      )}
+
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-5 z-50" onClick={() => setDeleteConfirm(null)}>
+          <div className="w-full max-w-sm bg-white rounded-xl p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Eliminar plato</h3>
+            <p className="text-gray-600 mb-6">
+              ¿Eliminar <strong>"{deleteConfirm.nombre}"</strong>?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">
+                Cancelar
+              </button>
+              <button onClick={() => { onDeletePlatoArmado(deleteConfirm.id); setDeleteConfirm(null); }} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================
+// MODAL ARMAR PLATO
+// ============================================
+function PlatoArmadoModal({ plato, componentes, ingredients, onClose, onSave }) {
+  const isEditing = !!plato;
+  const [nombre, setNombre] = useState(plato?.nombre || '');
+  const [verdura, setVerdura] = useState(plato?.verdura || { verdura: '', salsa1: '', salsa2: '', crujiente: '', acido: '', fresco: '', polvoDecorativo: '' });
+  const [ensalada, setEnsalada] = useState(plato?.ensalada || { base: '', vinagreta: '', toppingDecorativo: '' });
+  const [proteina, setProteina] = useState(plato?.proteina || { proteina: '' });
+
+  // Filtros: componentes por categoría + sección
+  const componentesFiltrados = (categoria, seccion) =>
+    componentes.filter(c =>
+      (c.categoria || '').toLowerCase() === categoria.toLowerCase() &&
+      Array.isArray(c.secciones) && c.secciones.includes(seccion)
+    );
+
+  const optLabel = (c) => {
+    const costo = calcularCostoPorcionComponente(c, ingredients);
+    return `${c.nombre} — L${costo.toFixed(2)}`;
+  };
+
+  const getCompById = (id) => componentes.find(c => c.id === id);
+
+  const sumarSeleccion = (sec) => {
+    let total = 0;
+    Object.values(sec || {}).forEach(id => {
+      if (!id) return;
+      const c = getCompById(id);
+      if (c) total += calcularCostoPorcionComponente(c, ingredients);
+    });
+    return total;
+  };
+
+  const costoVerdura = sumarSeleccion(verdura);
+  const costoEnsalada = sumarSeleccion(ensalada);
+  const costoProteina = sumarSeleccion(proteina);
+  const costoDirecto = costoVerdura + costoEnsalada + costoProteina;
+
+  const handleSubmit = () => {
+    if (!nombre.trim()) return;
+    onSave({
+      nombre: nombre.trim(),
+      verdura,
+      ensalada,
+      proteina
+    });
+  };
+
+  const Select = ({ value, onChange, options, placeholder }) => (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-gray-400 bg-white"
+    >
+      <option value="">{placeholder}</option>
+      {options.map(c => (
+        <option key={c.id} value={c.id}>{optLabel(c)}</option>
+      ))}
+    </select>
+  );
+
+  const Row = ({ label, value, onChange, options }) => (
+    <div className="grid grid-cols-3 gap-3 items-center mb-2">
+      <label className="text-sm text-gray-700">{label}</label>
+      <div className="col-span-2">
+        <Select value={value} onChange={onChange} options={options} placeholder={`— ${label} (opcional) —`} />
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-5 z-50" onClick={onClose}>
+      <div className="w-full max-w-3xl bg-white rounded-xl overflow-hidden max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">
+            {isEditing ? 'Editar plato armado' : 'Armar plato'}
+          </h3>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600">
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex flex-col gap-1.5 mb-6">
+            <label className="text-sm font-medium text-gray-700">Nombre del plato</label>
+            <input
+              type="text"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+              placeholder="Ej: Almuerzo Lunes - Berenjena"
+              autoFocus
+            />
+          </div>
+
+          {/* Sección Verdura */}
+          <div className="mb-5 border border-gray-200 rounded-xl overflow-hidden">
+            <div className="px-4 py-3 bg-green-50 border-b border-green-200 flex justify-between items-center">
+              <h4 className="text-sm font-semibold text-green-800 uppercase tracking-wide">Verdura</h4>
+              <span className="text-sm font-medium text-green-700">L{costoVerdura.toFixed(2)}</span>
+            </div>
+            <div className="p-4">
+              <Row label="Verdura" value={verdura.verdura} onChange={(v) => setVerdura({ ...verdura, verdura: v })} options={componentesFiltrados('verdura', 'Verdura')} />
+              <Row label="Salsa 1" value={verdura.salsa1} onChange={(v) => setVerdura({ ...verdura, salsa1: v })} options={componentesFiltrados('salsa', 'Verdura')} />
+              <Row label="Salsa 2" value={verdura.salsa2} onChange={(v) => setVerdura({ ...verdura, salsa2: v })} options={componentesFiltrados('salsa', 'Verdura')} />
+              <Row label="Crujiente" value={verdura.crujiente} onChange={(v) => setVerdura({ ...verdura, crujiente: v })} options={componentesFiltrados('crujiente', 'Verdura')} />
+              <Row label="Ácido" value={verdura.acido} onChange={(v) => setVerdura({ ...verdura, acido: v })} options={componentesFiltrados('ácido', 'Verdura')} />
+              <Row label="Fresco" value={verdura.fresco} onChange={(v) => setVerdura({ ...verdura, fresco: v })} options={componentesFiltrados('fresco', 'Verdura')} />
+              <Row label="Polvo decorativo" value={verdura.polvoDecorativo} onChange={(v) => setVerdura({ ...verdura, polvoDecorativo: v })} options={componentesFiltrados('polvo decorativo', 'Verdura')} />
+            </div>
+          </div>
+
+          {/* Sección Ensalada */}
+          <div className="mb-5 border border-gray-200 rounded-xl overflow-hidden">
+            <div className="px-4 py-3 bg-lime-50 border-b border-lime-200 flex justify-between items-center">
+              <h4 className="text-sm font-semibold text-lime-800 uppercase tracking-wide">Ensalada</h4>
+              <span className="text-sm font-medium text-lime-700">L{costoEnsalada.toFixed(2)}</span>
+            </div>
+            <div className="p-4">
+              <Row label="Base" value={ensalada.base} onChange={(v) => setEnsalada({ ...ensalada, base: v })} options={componentesFiltrados('base ensalada', 'Ensalada')} />
+              <Row label="Vinagreta" value={ensalada.vinagreta} onChange={(v) => setEnsalada({ ...ensalada, vinagreta: v })} options={componentesFiltrados('vinagreta', 'Ensalada')} />
+              <Row label="Topping decorativo" value={ensalada.toppingDecorativo} onChange={(v) => setEnsalada({ ...ensalada, toppingDecorativo: v })} options={componentesFiltrados('topping decorativo', 'Ensalada')} />
+            </div>
+          </div>
+
+          {/* Sección Proteína */}
+          <div className="mb-5 border border-gray-200 rounded-xl overflow-hidden">
+            <div className="px-4 py-3 bg-amber-50 border-b border-amber-200 flex justify-between items-center">
+              <h4 className="text-sm font-semibold text-amber-800 uppercase tracking-wide">Proteína</h4>
+              <span className="text-sm font-medium text-amber-700">L{costoProteina.toFixed(2)}</span>
+            </div>
+            <div className="p-4">
+              <Row label="Proteína" value={proteina.proteina} onChange={(v) => setProteina({ ...proteina, proteina: v })} options={componentesFiltrados('proteína', 'Proteína')} />
+            </div>
+          </div>
+
+          {/* Resumen */}
+          <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg flex justify-between items-center">
+            <span className="text-sm font-medium text-gray-700">Costo directo del plato (suma de componentes)</span>
+            <span className="text-lg font-bold text-gray-900">L{costoDirecto.toFixed(2)}</span>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            Los empaques, ISV, delivery y precio de venta se configuran después en la lista de platos.
+          </p>
+        </div>
+
+        <div className="flex gap-3 justify-end px-6 py-4 border-t border-gray-200 bg-gray-50">
+          <button onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+            Cancelar
+          </button>
+          <button onClick={handleSubmit} className="px-5 py-2.5 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800">
+            {isEditing ? 'Guardar cambios' : 'Crear plato'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
