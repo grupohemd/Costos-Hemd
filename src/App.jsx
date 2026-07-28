@@ -1542,6 +1542,9 @@ export default function App() {
   // Precio de venta por receta
   const [precioVentaPorReceta, setPrecioVentaPorReceta] = useState({});
 
+  // Historial de comparaciones de costos (compartido entre usuarios vía Firebase)
+  const [historialComparativas, setHistorialComparativas] = useState([]);
+
   // Estado de carga para Firebase
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -1734,6 +1737,29 @@ export default function App() {
         }
         if (data.platosArmadosPorMarca) setPlatosArmadosPorMarca(data.platosArmadosPorMarca);
 
+        // Historial de comparativas: hidratar desde Firebase o migrar desde localStorage legado
+        const firebaseHistorial = Array.isArray(data.historialComparativas) ? data.historialComparativas : [];
+        if (firebaseHistorial.length > 0) {
+          setHistorialComparativas(firebaseHistorial);
+          // Firebase ya tiene datos: localStorage queda obsoleto, limpiarlo si existe
+          try { localStorage.removeItem('comparativa_costos_historial'); } catch (e) {}
+        } else {
+          try {
+            const raw = localStorage.getItem('comparativa_costos_historial');
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                console.log('Migrando historial de comparativas de localStorage a Firebase...');
+                setHistorialComparativas(parsed);
+                // El efecto de guardado en Firebase persistirá el nuevo estado; limpiar localStorage para evitar duplicados
+                localStorage.removeItem('comparativa_costos_historial');
+              }
+            }
+          } catch (e) {
+            console.error('Error migrando historial de comparativas desde localStorage:', e);
+          }
+        }
+
         // Asegurar que la marca "Green Memo Everyday" existe (migración automática)
         const brandsFromDb = data.brands || [];
         if (!brandsFromDb.some(b => b.name === 'Green Memo Everyday')) {
@@ -1741,6 +1767,22 @@ export default function App() {
         }
       } else {
         console.log('No hay datos en Firebase, usando valores iniciales');
+        // Migrar historial de comparativas desde localStorage si existe
+        let historialMigrado = [];
+        try {
+          const raw = localStorage.getItem('comparativa_costos_historial');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              console.log('Migrando historial de comparativas de localStorage a Firebase (primer arranque)...');
+              historialMigrado = parsed;
+              setHistorialComparativas(parsed);
+              localStorage.removeItem('comparativa_costos_historial');
+            }
+          }
+        } catch (e) {
+          console.error('Error migrando historial de comparativas desde localStorage:', e);
+        }
         // Guardar los datos iniciales en Firebase
         await saveToFirebase({
           ingredients: initialIngredients,
@@ -1756,7 +1798,8 @@ export default function App() {
           empaquesPorReceta: {},
           deliveryPorReceta: {},
           isvPorReceta: {},
-          precioVentaPorReceta: {}
+          precioVentaPorReceta: {},
+          historialComparativas: historialMigrado
         });
       }
     } catch (error) {
@@ -1795,12 +1838,13 @@ export default function App() {
         precioVentaPorReceta,
         componentesPorMarca,
         categoriasComponentes,
-        platosArmadosPorMarca
+        platosArmadosPorMarca,
+        historialComparativas
       });
     }, 1000); // Esperar 1 segundo antes de guardar
 
     return () => clearTimeout(timeoutId);
-  }, [ingredients, recetasPorMarca, brands, configCostos, basesRecetaPorMarca, basesPorReceta, empaquesPorMarca, empaquesPorReceta, deliveryPorReceta, isvPorReceta, precioVentaPorReceta, componentesPorMarca, categoriasComponentes, platosArmadosPorMarca, isLoading]);
+  }, [ingredients, recetasPorMarca, brands, configCostos, basesRecetaPorMarca, basesPorReceta, empaquesPorMarca, empaquesPorReceta, deliveryPorReceta, isvPorReceta, precioVentaPorReceta, componentesPorMarca, categoriasComponentes, platosArmadosPorMarca, historialComparativas, isLoading]);
 
   const handleLogin = (user) => {
     setCurrentUser(user);
@@ -2626,6 +2670,9 @@ export default function App() {
               // Sincronización
               onSyncData={handleSyncData}
               syncStatus={syncStatus}
+              // Historial de comparativas (Firebase)
+              historialComparativas={historialComparativas}
+              setHistorialComparativas={setHistorialComparativas}
             />
       )}
         </>
@@ -2989,7 +3036,10 @@ function DashboardScreen({
   onDeletePlatoArmado,
   // Sincronización
   onSyncData,
-  syncStatus
+  syncStatus,
+  // Historial de comparativas de costos (Firebase)
+  historialComparativas,
+  setHistorialComparativas
 }) {
   const [currentModule, setCurrentModule] = useState('menu');
   const [selectedRecipe, setSelectedRecipe] = useState(null);
@@ -3163,7 +3213,11 @@ function DashboardScreen({
           />
         )}
         {currentModule === 'comparativa' && (
-          <ComparativaCostosModule ingredients={ingredients} />
+          <ComparativaCostosModule
+            ingredients={ingredients}
+            historial={historialComparativas}
+            setHistorial={setHistorialComparativas}
+          />
         )}
       </main>
     </div>
@@ -8205,9 +8259,7 @@ function SubRecetaModal({ subReceta, ingredients, onClose, onSave }) {
 // ============================================
 // COMPARATIVA DE COSTOS
 // ============================================
-function ComparativaCostosModule({ ingredients }) {
-  const STORAGE_KEY = 'comparativa_costos_historial';
-
+function ComparativaCostosModule({ ingredients, historial, setHistorial }) {
   const emptyLado = {
     modo: 'banco',
     ingredienteId: null,
@@ -8218,26 +8270,7 @@ function ComparativaCostosModule({ ingredients }) {
 
   const [ladoA, setLadoA] = useState({ ...emptyLado, modo: 'banco' });
   const [ladoB, setLadoB] = useState({ ...emptyLado, modo: 'manual' });
-  const [historial, setHistorial] = useState([]);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setHistorial(JSON.parse(raw));
-    } catch (e) {
-      setHistorial([]);
-    }
-  }, []);
-
-  const persistHistorial = (nuevo) => {
-    setHistorial(nuevo);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(nuevo));
-    } catch (e) {
-      // ignore quota errors
-    }
-  };
 
   const calcular = (lado) => {
     const peso = parseFloat(lado.pesoCompra);
@@ -8308,15 +8341,15 @@ function ComparativaCostosModule({ ingredients }) {
       porcentaje: resultado.porcentaje,
       ganador: resultado.tipo
     };
-    persistHistorial([entry, ...historial]);
+    setHistorial([entry, ...historial]);
   };
 
   const eliminarEntrada = (id) => {
-    persistHistorial(historial.filter(h => h.id !== id));
+    setHistorial(historial.filter(h => h.id !== id));
   };
 
   const limpiarHistorial = () => {
-    persistHistorial([]);
+    setHistorial([]);
     setShowClearConfirm(false);
   };
 
@@ -8436,7 +8469,7 @@ function ComparativaCostosModule({ ingredients }) {
         <div className="flex justify-between items-center px-5 py-4 border-b border-gray-200">
           <div>
             <h3 className="text-base font-semibold text-gray-900">Historial de comparaciones</h3>
-            <p className="text-xs text-gray-500 mt-0.5">{historial.length} comparación{historial.length !== 1 ? 'es' : ''} guardada{historial.length !== 1 ? 's' : ''} en este navegador</p>
+            <p className="text-xs text-gray-500 mt-0.5">{historial.length} comparación{historial.length !== 1 ? 'es' : ''} guardada{historial.length !== 1 ? 's' : ''}</p>
           </div>
           {historial.length > 0 && (
             <button
