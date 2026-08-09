@@ -1544,6 +1544,8 @@ export default function App() {
 
   // Historial de comparaciones de costos (compartido entre usuarios vía Firebase)
   const [historialComparativas, setHistorialComparativas] = useState([]);
+  // Historial de comparaciones de empaques / materiales (independiente)
+  const [historialComparativasEmpaques, setHistorialComparativasEmpaques] = useState([]);
 
   // Estado de carga para Firebase
   const [isLoading, setIsLoading] = useState(true);
@@ -1737,6 +1739,11 @@ export default function App() {
         }
         if (data.platosArmadosPorMarca) setPlatosArmadosPorMarca(data.platosArmadosPorMarca);
 
+        // Historial de comparativas de empaques (independiente)
+        if (Array.isArray(data.historialComparativasEmpaques)) {
+          setHistorialComparativasEmpaques(data.historialComparativasEmpaques);
+        }
+
         // Historial de comparativas: hidratar desde Firebase o migrar desde localStorage legado
         const firebaseHistorial = Array.isArray(data.historialComparativas) ? data.historialComparativas : [];
         if (firebaseHistorial.length > 0) {
@@ -1799,7 +1806,8 @@ export default function App() {
           deliveryPorReceta: {},
           isvPorReceta: {},
           precioVentaPorReceta: {},
-          historialComparativas: historialMigrado
+          historialComparativas: historialMigrado,
+          historialComparativasEmpaques: []
         });
       }
     } catch (error) {
@@ -1839,12 +1847,13 @@ export default function App() {
         componentesPorMarca,
         categoriasComponentes,
         platosArmadosPorMarca,
-        historialComparativas
+        historialComparativas,
+        historialComparativasEmpaques
       });
     }, 1000); // Esperar 1 segundo antes de guardar
 
     return () => clearTimeout(timeoutId);
-  }, [ingredients, recetasPorMarca, brands, configCostos, basesRecetaPorMarca, basesPorReceta, empaquesPorMarca, empaquesPorReceta, deliveryPorReceta, isvPorReceta, precioVentaPorReceta, componentesPorMarca, categoriasComponentes, platosArmadosPorMarca, historialComparativas, isLoading]);
+  }, [ingredients, recetasPorMarca, brands, configCostos, basesRecetaPorMarca, basesPorReceta, empaquesPorMarca, empaquesPorReceta, deliveryPorReceta, isvPorReceta, precioVentaPorReceta, componentesPorMarca, categoriasComponentes, platosArmadosPorMarca, historialComparativas, historialComparativasEmpaques, isLoading]);
 
   const handleLogin = (user) => {
     setCurrentUser(user);
@@ -2673,6 +2682,11 @@ export default function App() {
               // Historial de comparativas (Firebase)
               historialComparativas={historialComparativas}
               setHistorialComparativas={setHistorialComparativas}
+              // Historial de comparativas de empaques (Firebase)
+              historialComparativasEmpaques={historialComparativasEmpaques}
+              setHistorialComparativasEmpaques={setHistorialComparativasEmpaques}
+              // Empaques por marca (para comparativa de empaques)
+              empaquesPorMarca={empaquesPorMarca}
             />
       )}
         </>
@@ -3039,7 +3053,12 @@ function DashboardScreen({
   syncStatus,
   // Historial de comparativas de costos (Firebase)
   historialComparativas,
-  setHistorialComparativas
+  setHistorialComparativas,
+  // Historial de comparativas de empaques (Firebase)
+  historialComparativasEmpaques,
+  setHistorialComparativasEmpaques,
+  // Empaques por marca (para comparativa de empaques)
+  empaquesPorMarca
 }) {
   const [currentModule, setCurrentModule] = useState('menu');
   const [selectedRecipe, setSelectedRecipe] = useState(null);
@@ -3217,6 +3236,10 @@ function DashboardScreen({
             ingredients={ingredients}
             historial={historialComparativas}
             setHistorial={setHistorialComparativas}
+            historialEmpaques={historialComparativasEmpaques}
+            setHistorialEmpaques={setHistorialComparativasEmpaques}
+            empaquesPorMarca={empaquesPorMarca}
+            brand={brand}
           />
         )}
       </main>
@@ -8259,7 +8282,59 @@ function SubRecetaModal({ subReceta, ingredients, onClose, onSave }) {
 // ============================================
 // COMPARATIVA DE COSTOS
 // ============================================
-function ComparativaCostosModule({ ingredients, historial, setHistorial }) {
+function ComparativaCostosModule({ ingredients, historial, setHistorial, historialEmpaques, setHistorialEmpaques, empaquesPorMarca, brand }) {
+  const [tab, setTab] = useState('ingredientes');
+
+  return (
+    <div className="max-w-6xl mx-auto">
+      <div className="mb-6 border-b border-gray-200">
+        <div className="flex gap-1">
+          <button
+            onClick={() => setTab('ingredientes')}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              tab === 'ingredientes'
+                ? 'border-gray-900 text-gray-900'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Ingredientes
+          </button>
+          <button
+            onClick={() => setTab('empaques')}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              tab === 'empaques'
+                ? 'border-gray-900 text-gray-900'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Empaques / Materiales
+          </button>
+        </div>
+      </div>
+
+      {tab === 'ingredientes' && (
+        <ComparativaIngredientesTab
+          ingredients={ingredients}
+          historial={historial}
+          setHistorial={setHistorial}
+        />
+      )}
+      {tab === 'empaques' && (
+        <ComparativaEmpaquesTab
+          empaquesPorMarca={empaquesPorMarca || {}}
+          brand={brand}
+          historial={historialEmpaques || []}
+          setHistorial={setHistorialEmpaques}
+        />
+      )}
+    </div>
+  );
+}
+
+// ============================================
+// TAB: COMPARATIVA DE INGREDIENTES (comportamiento original preservado)
+// ============================================
+function ComparativaIngredientesTab({ ingredients, historial, setHistorial }) {
   const emptyLado = {
     modo: 'banco',
     ingredienteId: null,
@@ -8368,10 +8443,10 @@ function ComparativaCostosModule({ ingredients, historial, setHistorial }) {
   const barBPct = maxKilo > 0 ? (calcB.precioKilo / maxKilo) * 100 : 0;
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div>
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Comparativa de Costos</h2>
+          <h2 className="text-xl font-semibold text-gray-900">Comparativa de Ingredientes</h2>
           <p className="text-sm text-gray-500 mt-1">Compara el precio por kilo de un ingrediente contra otro</p>
         </div>
         <button
@@ -8562,6 +8637,508 @@ function ComparativaCostosModule({ ingredients, historial, setHistorial }) {
     </div>
   );
 }
+
+// ============================================
+// TAB: COMPARATIVA DE EMPAQUES / MATERIALES
+// ============================================
+function ComparativaEmpaquesTab({ empaquesPorMarca, brand, historial, setHistorial }) {
+  // Lista plana de todos los empaques existentes con su marca de origen
+  const empaquesDisponibles = useMemo(() => {
+    const out = [];
+    Object.entries(empaquesPorMarca || {}).forEach(([marcaId, lista]) => {
+      (lista || []).forEach(e => out.push({ ...e, _marcaId: marcaId }));
+    });
+    return out;
+  }, [empaquesPorMarca]);
+
+  const emptyLado = {
+    modo: 'catalogo',
+    empaqueId: null,
+    nombre: '',
+    precio: '',      // precio total (o por unidad si viene del catálogo)
+    cantidad: ''     // cantidad por compra (unidades)
+  };
+
+  const [ladoA, setLadoA] = useState({ ...emptyLado, modo: 'catalogo' });
+  const [ladoB, setLadoB] = useState({ ...emptyLado, modo: 'manual' });
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+
+  const calcular = (lado) => {
+    const precio = parseFloat(lado.precio);
+    if (!precio || precio <= 0) {
+      return { valido: false, precioUnidad: 0, cantidad: 0 };
+    }
+    // Si no se ingresa cantidad (o es inválida), se asume 1 (el precio ya es por unidad)
+    const cantidadRaw = parseFloat(lado.cantidad);
+    const cantidad = (!cantidadRaw || cantidadRaw <= 0) ? 1 : cantidadRaw;
+    return {
+      valido: true,
+      precioUnidad: precio / cantidad,
+      cantidad
+    };
+  };
+
+  const calcA = calcular(ladoA);
+  const calcB = calcular(ladoB);
+  const ambosValidos = calcA.valido && calcB.valido && ladoA.nombre.trim() && ladoB.nombre.trim();
+
+  let resultado = null;
+  if (ambosValidos) {
+    const diff = Math.abs(calcA.precioUnidad - calcB.precioUnidad);
+    const mayor = Math.max(calcA.precioUnidad, calcB.precioUnidad);
+    const porcentaje = mayor > 0 ? (diff / mayor) * 100 : 0;
+    if (Math.abs(calcA.precioUnidad - calcB.precioUnidad) < 0.0005) {
+      resultado = { tipo: 'igual', diff: 0, porcentaje: 0 };
+    } else if (calcA.precioUnidad < calcB.precioUnidad) {
+      resultado = { tipo: 'A', diff, porcentaje, nombre: ladoA.nombre };
+    } else {
+      resultado = { tipo: 'B', diff, porcentaje, nombre: ladoB.nombre };
+    }
+  }
+
+  const handleSelectEmpaque = (setLado) => (emp) => {
+    setLado({
+      modo: 'catalogo',
+      empaqueId: emp.id,
+      nombre: emp.nombre || '',
+      precio: emp.precio != null ? String(emp.precio) : '',
+      cantidad: '1'
+    });
+  };
+
+  const handleChangeModo = (setLado, modo) => {
+    setLado({ ...emptyLado, modo });
+  };
+
+  const nuevaComparacion = () => {
+    setLadoA({ ...emptyLado, modo: 'catalogo' });
+    setLadoB({ ...emptyLado, modo: 'manual' });
+  };
+
+  const guardarComparacion = () => {
+    if (!ambosValidos || !resultado) return;
+    const entry = {
+      id: 'cmpe_' + Date.now(),
+      fecha: new Date().toISOString(),
+      ladoA: {
+        nombre: ladoA.nombre,
+        precioUnidad: calcA.precioUnidad,
+        modo: ladoA.modo
+      },
+      ladoB: {
+        nombre: ladoB.nombre,
+        precioUnidad: calcB.precioUnidad,
+        modo: ladoB.modo
+      },
+      diff: resultado.diff,
+      porcentaje: resultado.porcentaje,
+      ganador: resultado.tipo
+    };
+    setHistorial([entry, ...(historial || [])]);
+  };
+
+  const eliminarEntrada = (id) => {
+    setHistorial((historial || []).filter(h => h.id !== id));
+  };
+
+  const limpiarHistorial = () => {
+    setHistorial([]);
+    setShowClearConfirm(false);
+  };
+
+  const formatFecha = (iso) => {
+    try {
+      const d = new Date(iso);
+      return d.toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+        ' ' + d.toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      return iso;
+    }
+  };
+
+  const maxUnidad = Math.max(calcA.precioUnidad, calcB.precioUnidad);
+  const barAPct = maxUnidad > 0 ? (calcA.precioUnidad / maxUnidad) * 100 : 0;
+  const barBPct = maxUnidad > 0 ? (calcB.precioUnidad / maxUnidad) * 100 : 0;
+
+  return (
+    <div>
+      <div className="flex justify-between items-start mb-6">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900">Comparativa de Empaques / Materiales</h2>
+          <p className="text-sm text-gray-500 mt-1">Compara el precio por unidad de un empaque contra otro</p>
+        </div>
+        <button
+          onClick={nuevaComparacion}
+          className="px-4 py-2 text-sm font-medium bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
+        >
+          Nueva comparación
+        </button>
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-2 md:divide-x md:divide-gray-200">
+          <LadoComparativaEmpaque
+            titulo="Opción A"
+            colorAcento="text-emerald-600"
+            lado={ladoA}
+            setLado={setLadoA}
+            onChangeModo={(modo) => handleChangeModo(setLadoA, modo)}
+            onSelectEmpaque={handleSelectEmpaque(setLadoA)}
+            empaquesDisponibles={empaquesDisponibles}
+            calc={calcA}
+          />
+          <LadoComparativaEmpaque
+            titulo="Opción B"
+            colorAcento="text-blue-600"
+            lado={ladoB}
+            setLado={setLadoB}
+            onChangeModo={(modo) => handleChangeModo(setLadoB, modo)}
+            onSelectEmpaque={handleSelectEmpaque(setLadoB)}
+            empaquesDisponibles={empaquesDisponibles}
+            calc={calcB}
+          />
+        </div>
+
+        {ambosValidos && resultado && (
+          <div className="border-t border-gray-200 p-6 bg-gray-50">
+            <div className={`rounded-xl p-5 border ${
+              resultado.tipo === 'A' ? 'bg-emerald-50 border-emerald-200' :
+              resultado.tipo === 'B' ? 'bg-blue-50 border-blue-200' :
+              'bg-gray-100 border-gray-200'
+            }`}>
+              {resultado.tipo === 'igual' ? (
+                <p className="text-lg font-semibold text-gray-700 text-center">Mismo precio por unidad</p>
+              ) : (
+                <>
+                  <p className={`text-lg font-semibold ${resultado.tipo === 'A' ? 'text-emerald-800' : 'text-blue-800'}`}>
+                    {resultado.nombre} es más barato por L{resultado.diff.toFixed(2)}/u ({resultado.porcentaje.toFixed(1)}% menos)
+                  </p>
+                  <div className="grid grid-cols-2 gap-4 mt-2 text-sm">
+                    <div className={resultado.tipo === 'A' ? 'text-emerald-700' : 'text-gray-600'}>
+                      Diferencia: <span className="font-semibold">L{resultado.diff.toFixed(2)}/u</span>
+                    </div>
+                    <div className={resultado.tipo === 'A' ? 'text-emerald-700' : 'text-gray-600'}>
+                      Ahorro: <span className="font-semibold">{resultado.porcentaje.toFixed(1)}%</span>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="mt-5 space-y-3">
+              <div>
+                <div className="flex justify-between text-xs text-gray-600 mb-1">
+                  <span className="font-medium truncate">{ladoA.nombre || 'Opción A'}</span>
+                  <span className="tabular-nums">L{calcA.precioUnidad.toFixed(2)}/u</span>
+                </div>
+                <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="h-full bg-emerald-500 transition-all" style={{ width: `${barAPct}%` }} />
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-xs text-gray-600 mb-1">
+                  <span className="font-medium truncate">{ladoB.nombre || 'Opción B'}</span>
+                  <span className="tabular-nums">L{calcB.precioUnidad.toFixed(2)}/u</span>
+                </div>
+                <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="h-full bg-blue-500 transition-all" style={{ width: `${barBPct}%` }} />
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 flex justify-end">
+              <button
+                onClick={guardarComparacion}
+                className="px-4 py-2 text-sm font-medium bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
+              >
+                Guardar comparación
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-8 bg-white border border-gray-200 rounded-xl">
+        <div className="flex justify-between items-center px-5 py-4 border-b border-gray-200">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900">Historial de comparaciones</h3>
+            <p className="text-xs text-gray-500 mt-0.5">{(historial || []).length} comparación{(historial || []).length !== 1 ? 'es' : ''} guardada{(historial || []).length !== 1 ? 's' : ''}</p>
+          </div>
+          {(historial || []).length > 0 && (
+            <button
+              onClick={() => setShowClearConfirm(true)}
+              className="px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-md hover:bg-red-50 transition-colors"
+            >
+              Limpiar historial
+            </button>
+          )}
+        </div>
+
+        {(historial || []).length === 0 ? (
+          <div className="px-5 py-12 text-center text-sm text-gray-500">
+            No hay comparaciones guardadas todavía.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
+                <tr>
+                  <th className="px-4 py-3 text-left font-medium">Fecha</th>
+                  <th className="px-4 py-3 text-left font-medium">Opción A</th>
+                  <th className="px-4 py-3 text-right font-medium">L/u A</th>
+                  <th className="px-4 py-3 text-left font-medium">Opción B</th>
+                  <th className="px-4 py-3 text-right font-medium">L/u B</th>
+                  <th className="px-4 py-3 text-right font-medium">Diferencia</th>
+                  <th className="px-4 py-3 text-left font-medium">Más barato</th>
+                  <th className="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {(historial || []).map((h) => (
+                  <tr key={h.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">{formatFecha(h.fecha)}</td>
+                    <td className="px-4 py-3 text-gray-900">{h.ladoA?.nombre}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-gray-700">L{Number(h.ladoA?.precioUnidad || 0).toFixed(2)}</td>
+                    <td className="px-4 py-3 text-gray-900">{h.ladoB?.nombre}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-gray-700">L{Number(h.ladoB?.precioUnidad || 0).toFixed(2)}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-gray-700">
+                      {h.ganador === 'igual' ? '—' : `L${Number(h.diff || 0).toFixed(2)} (${Number(h.porcentaje || 0).toFixed(1)}%)`}
+                    </td>
+                    <td className="px-4 py-3">
+                      {h.ganador === 'igual' ? (
+                        <span className="px-2 py-0.5 text-xs rounded bg-gray-100 text-gray-600">Empate</span>
+                      ) : h.ganador === 'A' ? (
+                        <span className="px-2 py-0.5 text-xs rounded bg-emerald-100 text-emerald-700">{h.ladoA?.nombre}</span>
+                      ) : (
+                        <span className="px-2 py-0.5 text-xs rounded bg-blue-100 text-blue-700">{h.ladoB?.nombre}</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => eliminarEntrada(h.id)}
+                        className="text-xs text-gray-400 hover:text-red-600"
+                        title="Eliminar"
+                      >
+                        Eliminar
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {showClearConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Limpiar historial</h3>
+            <p className="text-sm text-gray-600 mb-5">¿Eliminar todas las comparaciones guardadas? Esta acción no se puede deshacer.</p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowClearConfirm(false)}
+                className="px-4 py-2 text-sm font-medium border border-gray-200 rounded-lg hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={limpiarHistorial}
+                className="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                Eliminar todo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LadoComparativaEmpaque({ titulo, colorAcento, lado, setLado, onChangeModo, onSelectEmpaque, empaquesDisponibles, calc }) {
+  const esCatalogo = lado.modo === 'catalogo';
+  const readOnlyCls = 'w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700';
+  const editableCls = 'w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-gray-500';
+
+  return (
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className={`text-base font-semibold ${colorAcento}`}>{titulo}</h3>
+        <div className="inline-flex bg-gray-100 rounded-lg p-0.5">
+          <button
+            onClick={() => onChangeModo('catalogo')}
+            className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+              esCatalogo ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Del catálogo
+          </button>
+          <button
+            onClick={() => onChangeModo('manual')}
+            className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+              !esCatalogo ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Manual
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {esCatalogo ? (
+          <>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Buscar empaque</label>
+              <EmpaqueAutocomplete
+                value={lado.nombre}
+                empaques={empaquesDisponibles}
+                onChange={(val) => setLado({ ...lado, nombre: val, empaqueId: null, precio: '', cantidad: '' })}
+                onSelect={onSelectEmpaque}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Nombre</label>
+              <input type="text" value={lado.nombre} readOnly className={readOnlyCls} placeholder="—" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Cantidad por compra</label>
+                <input
+                  type="text"
+                  value={lado.cantidad !== '' ? lado.cantidad : ''}
+                  readOnly
+                  className={readOnlyCls}
+                  placeholder="—"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Precio (L)</label>
+                <input
+                  type="text"
+                  value={lado.precio !== '' ? lado.precio : ''}
+                  readOnly
+                  className={readOnlyCls}
+                  placeholder="—"
+                />
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Nombre / Proveedor</label>
+              <input
+                type="text"
+                value={lado.nombre}
+                onChange={(e) => setLado({ ...lado, nombre: e.target.value })}
+                className={editableCls}
+                placeholder="Ej: Caja de tenedores"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Cantidad por compra</label>
+                <input
+                  type="number"
+                  step="any"
+                  min="0"
+                  value={lado.cantidad}
+                  onChange={(e) => setLado({ ...lado, cantidad: e.target.value })}
+                  className={editableCls}
+                  placeholder="100"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Precio (L)</label>
+                <input
+                  type="number"
+                  step="any"
+                  min="0"
+                  value={lado.precio}
+                  onChange={(e) => setLado({ ...lado, precio: e.target.value })}
+                  className={editableCls}
+                  placeholder="150.00"
+                />
+              </div>
+            </div>
+          </>
+        )}
+
+        <div className="mt-2 pt-3 border-t border-gray-100 grid grid-cols-2 gap-3">
+          <div>
+            <div className="text-xs text-gray-500">Precio por unidad</div>
+            <div className={`text-lg font-semibold tabular-nums ${calc.valido ? 'text-gray-900' : 'text-gray-300'}`}>
+              {calc.valido ? `L${calc.precioUnidad.toFixed(2)}` : 'L—'}
+            </div>
+          </div>
+          <div>
+            <div className="text-xs text-gray-500">Cantidad</div>
+            <div className={`text-lg font-semibold tabular-nums ${calc.valido ? 'text-gray-900' : 'text-gray-300'}`}>
+              {calc.valido ? `${calc.cantidad} u` : '— u'}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EmpaqueAutocomplete({ value, empaques, onChange, onSelect }) {
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+
+  const handleChange = (e) => {
+    const newValue = e.target.value;
+    onChange(newValue);
+
+    if (newValue.length >= 2) {
+      const filtered = empaques.filter(emp =>
+        (emp.nombre || '').toLowerCase().includes(newValue.toLowerCase())
+      ).slice(0, 8);
+      setSuggestions(filtered);
+      setShowSuggestions(filtered.length > 0);
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSelect = (emp) => {
+    onSelect(emp);
+    setShowSuggestions(false);
+  };
+
+  return (
+    <div className="relative">
+      <input
+        type="text"
+        value={value}
+        onChange={handleChange}
+        onFocus={() => value.length >= 2 && suggestions.length > 0 && setShowSuggestions(true)}
+        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+        className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:border-gray-400"
+        placeholder="Buscar empaque..."
+      />
+      {showSuggestions && (
+        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+          {suggestions.map((emp) => (
+            <button
+              key={emp.id}
+              onClick={() => handleSelect(emp)}
+              className="w-full px-3 py-2 text-left hover:bg-gray-100 text-sm flex justify-between"
+            >
+              <span>{emp.nombre}</span>
+              {emp.precio != null && (
+                <span className="text-gray-500 text-xs">L{Number(emp.precio).toFixed(2)}</span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 function LadoComparativa({ titulo, colorAcento, lado, setLado, onChangeModo, onSelectIngrediente, ingredients, calc }) {
   const esBanco = lado.modo === 'banco';
